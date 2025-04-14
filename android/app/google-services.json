@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "686369155609",
+    "project_id": "uppgift3-ab122",
+    "storage_bucket": "uppgift3-ab122.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:686369155609:android:8323c3e1061e9a3de81888",
+        "android_client_info": {
+          "package_name": "com.example.uppgift3_new_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZJoHvc5e9jQD-OfweUovNuFSHY-Pjbs8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

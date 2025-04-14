@@ -1,0 +1,4 @@
+abstract class PersonEvent{
+    final  String name;
+    final int personlNummer;
+}
