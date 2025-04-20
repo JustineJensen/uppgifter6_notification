@@ -5,6 +5,7 @@ import 'package:uppgift3_new_app/screens/home.dart';
 
 class AuthService {
   Future<void> signup({
+    required String name,
     required String email,
     required String password,
     required BuildContext context,

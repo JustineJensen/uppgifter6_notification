@@ -1,8 +1,26 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
+import 'login_screen.dart';
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
+
+  @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (index == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Options tab tapped")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +46,7 @@ class LandingPage extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) =>  Login()),
+                      MaterialPageRoute(builder: (context) => LoginScreen()),
                     );
                   },
                   child: Text('Get Started'),

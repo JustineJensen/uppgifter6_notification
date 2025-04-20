@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:uppgift3_new_app/main.dart';
+import 'package:uppgift3_new_app/screens/signup_screen.dart';
 import 'package:uppgift3_new_app/services/auth_service.dart';
-class Signup extends StatelessWidget {
-  Signup({super.key});
+import 'package:firebase_auth/firebase_auth.dart';
+
+class LoginScreen extends StatelessWidget {
+  LoginScreen({super.key});
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -10,19 +12,15 @@ class Signup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: _signin(context),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Sign up',
+                'Sign in',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -33,12 +31,37 @@ class Signup extends StatelessWidget {
               const SizedBox(height: 16),
               _password(),
               const SizedBox(height: 16),
-              _signup(context),
+              _signin(context),
+              const SizedBox(height: 12),
+              _signupButton(context),
+              const SizedBox(height: 20),
+              FutureBuilder<User?>(
+                future: _getCurrentUser(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData && snapshot.data != null) {
+                      final user = snapshot.data!;
+                      return Text(
+                        ' ${user.displayName ?? 'Guest'}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      );
+                    } else {
+                      return const SizedBox.shrink(); 
+                    }
+                  } else {
+                    return const CircularProgressIndicator(); 
+                  }
+                },
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<User?> _getCurrentUser() async {
+    return FirebaseAuth.instance.currentUser;
   }
 
   Widget _emailAddress() {
@@ -64,8 +87,8 @@ class Signup extends StatelessWidget {
       children: [
         const Text('Password'),
         TextField(
-          controller: _passwordController,
           obscureText: true,
+          controller: _passwordController,
           decoration: const InputDecoration(
             hintText: 'Enter your password',
           ),
@@ -74,36 +97,28 @@ class Signup extends StatelessWidget {
     );
   }
 
-  Widget _signup(BuildContext context) {
+  Widget _signin(BuildContext context) {
     return ElevatedButton(
       onPressed: () async {
-        await AuthService().signup(
+        await AuthService().signin(
           email: _emailController.text,
           password: _passwordController.text,
           context: context,
         );
       },
-      child: const Text('Sign up'),
+      child: const Text('Sign in'),
     );
   }
 
-  Widget _signin(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text('Already have an account?'),
-        TextButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MyApp(),
-              ),
-            );
-          },
-          child: const Text('Sign in'),
-        ),
-      ],
+  Widget _signupButton(BuildContext context) {
+    return TextButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => SignupScreen()),
+        );
+      },
+      child: const Text('Don’t have an account? Sign up'),
     );
   }
 }

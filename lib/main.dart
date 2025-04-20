@@ -4,11 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uppgift3_new_app/firebase_options.dart';
 import 'package:uppgift3_new_app/screens/home.dart';
 import 'package:uppgift3_new_app/screens/landingpage.dart';
-import 'package:uppgift3_new_app/screens/login.dart';
+import 'package:uppgift3_new_app/screens/login_screen.dart';
+import 'package:uppgift3_new_app/screens/parking_space_screen.dart';
+import 'package:uppgift3_new_app/screens/person_screen.dart';
+import 'package:uppgift3_new_app/screens/vehicle_screen.dart';
+import 'package:uppgift3_new_app/screens/parking_screen.dart';
 
-
-
-Future<void> main()async{
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -26,7 +28,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LandingPage(), 
+      home: const LandingPage(),
+      routes: {
+        '/person': (context) => const PersonScreenContent(),
+        '/vehicles': (context) => const VehicleScreenContent(),
+        '/parking': (context) => const ParkingScreenContent(),
+        '/parkingplaces': (context) => const ParkingSpacecontent(),
+      },
     );
   }
 }
@@ -39,9 +47,9 @@ class AuthGate extends StatelessWidget {
     final FirebaseAuth _auth = FirebaseAuth.instance;
     User? user = _auth.currentUser;
     if (user != null) {
-      return Home(title: 'Parking App');
+      return const Home(title: 'Parking App');
     } else {
-      return Login(); 
+      return  LoginScreen();
     }
   }
 }
