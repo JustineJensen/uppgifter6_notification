@@ -1,4 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uppgift3_new_app/models/car.dart';
+import 'package:uppgift3_new_app/models/person.dart';
+import 'package:uppgift3_new_app/models/vehicle.dart';
+import 'package:uppgift3_new_app/models/vhicletype.dart';
+
+final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+final CollectionReference vehiclesCollection = _firestore.collection('vehicles');
 
 class VehicleScreenContent extends StatefulWidget {
   const VehicleScreenContent({super.key});
@@ -8,118 +16,194 @@ class VehicleScreenContent extends StatefulWidget {
 }
 
 class _VehicleScreenState extends State<VehicleScreenContent> {
-  List<String> vehicles = ['Car', 'Bike', 'Truck'];
+  List<Car> vehicles = [];
 
-  void _showVehicleDialog(BuildContext context, {String? vehicle}) {
-    TextEditingController vehicleController = TextEditingController(
-      text: vehicle ?? '',
-    );
+  Future<void> _fetchVehicles() async {
+    try {
+      QuerySnapshot snapshot = await vehiclesCollection.get();
+      print('Fetched documents: ${snapshot.docs.length}');
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(vehicle == null ? 'Registrera nytt fordon' : 'Uppdatera fordon'),
-          content: TextField(
-            controller: vehicleController,
-            decoration: const InputDecoration(labelText: 'Fordonstyp'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                final input = vehicleController.text.trim();
-                if (input.isEmpty) return;
-
-                setState(() {
-                  if (vehicle == null) {
-                    // Create
-                    vehicles.add(input);
-                  } else {
-                    // Update
-                    final index = vehicles.indexOf(vehicle);
-                    if (index != -1) {
-                      vehicles[index] = input;
-                    }
-                  }
-                });
-
-                Navigator.of(context).pop();
-              },
-              child: Text(vehicle == null ? 'Lägg till' : 'Uppdatera'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Avbryt'),
-            ),
-          ],
-        );
-      },
-    );
+      setState(() {
+        vehicles = snapshot.docs.map((doc) {
+          print('Document data: ${doc.data()}');
+          return Car.fromFirestore(doc);
+        }).toList();
+      });
+    } catch (e) {
+      print('Error fetching vehicles: $e');
+    }
   }
 
-  void _deleteVehicle(int index) {
+  @override
+  void initState() {
+    super.initState();
+    _fetchVehicles();
+  }
+
+  void _showVehicleDialog(BuildContext context, {Car? vehicle}) {
+    final regNrController = TextEditingController(text: vehicle?.registreringsNummer ?? '');
+    final colorController = TextEditingController(text: vehicle?.color ?? '');
+    final ownerNameController = TextEditingController(text: vehicle?.owner.namn ?? '');
+    final personNummerController = TextEditingController(text: vehicle?.owner.personNummer.toString() ?? '');
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Ta bort fordon'),
-        content: Text('Vill du ta bort "${vehicles[index]}"?'),
+        title: Text(vehicle == null ? 'Add New Vehicle' : 'Update Vehicle'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: regNrController,
+                decoration: const InputDecoration(labelText: 'Registreringsnummer'),
+              ),
+              TextField(
+                controller: colorController,
+                decoration: const InputDecoration(labelText: 'Color'),
+              ),
+              TextField(
+                controller: ownerNameController,
+                decoration: const InputDecoration(labelText: 'Owner\'s name'),
+              ),
+              TextField(
+                controller: personNummerController,
+                decoration: const InputDecoration(labelText: 'Person Number (12 numbers)'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
-            onPressed: () {
-              setState(() {
-                vehicles.removeAt(index);
-              });
+            onPressed: () async {
+              final regNr = regNrController.text.trim();
+              final color = colorController.text.trim();
+              final ownerName = ownerNameController.text.trim();
+              final personNummer = int.tryParse(personNummerController.text.trim());
+
+              if (regNr.isEmpty || color.isEmpty || ownerName.isEmpty || personNummer == null || personNummer.toString().length != 12) {
+                print('Invalid input');
+                return;
+              }
+
+              final car = Car(
+                id: DateTime.now().millisecondsSinceEpoch,
+                registreringsNummer: regNr,
+                typ: VehicleType.car,
+                color: color,
+                owner: Person(
+                  namn: ownerName,
+                  personNummer: personNummer,
+                ),
+              );
+
+              if (vehicle == null) {
+                await vehiclesCollection.add(car.toJson());
+              } else {
+                await vehiclesCollection.doc(vehicle.id.toString()).update(car.toJson());
+              }
+
               Navigator.of(context).pop();
+              _fetchVehicles();
             },
-            child: const Text('Ja'),
+            child: Text(vehicle == null ? 'Add' : 'Update'),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Nej'),
+            child: const Text('Cancel'),
           ),
         ],
       ),
     );
   }
-   Widget _buildOption(String title, IconData icon, VoidCallback onTap) {
-  return Builder(
-    builder: (BuildContext context) {
-      return ListTile(
-        leading: Icon(icon),
-        title: Text(title, style: const TextStyle(fontSize: 16)),
-        onTap: onTap,
-      );
-    },
-  );
-}
+
+  void _deleteVehicle(String vehicleId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Vehicle'),
+        content: const Text('Do you want to delete this vehicle?'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await vehiclesCollection.doc(vehicleId).delete();
+              setState(() {
+                vehicles.removeWhere((v) => v.id.toString() == vehicleId);
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text('Yes'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('No'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hantera Fordon'),
-        backgroundColor: Colors.blue,
+        title: const Text('Manage Vehicles'),
+        backgroundColor: Colors.green,
       ),
-      body: vehicles.isEmpty
-          ? const Center(child: Text('Inga fordon tillagda ännu.'))
-          : ListView.builder(
-              itemCount: vehicles.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: const Icon(Icons.directions_car),
-                  title: Text(vehicles[index]),
-                  onTap: () => _showVehicleDialog(context, vehicle: vehicles[index]), // Update
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deleteVehicle(index), 
-                  ),
-                );
-              },
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Add and View All buttons
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _showVehicleDialog(context),
+                  child: const Text('Add New Vehicle'),
+                ),
+                const SizedBox(height: 5),
+                ElevatedButton(
+                  onPressed: () => _fetchVehicles(),
+                  child: const Text('View All Vehicles'),
+                ),
+              ],
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showVehicleDialog(context), 
-        child: const Icon(Icons.add),
-        tooltip: 'Registrera nytt fordon',
+            const SizedBox(height: 10),
+            // Vehicle List
+            Expanded(
+              child: vehicles.isEmpty
+                  ? const Center(child: Text('No Vehicles available.'))
+                  : ListView.builder(
+                      itemCount: vehicles.length,
+                      itemBuilder: (context, index) {
+                        final car = vehicles[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: ListTile(
+                            leading: const Icon(Icons.directions_car),
+                            title: Text(car.registreringsNummer),
+                            subtitle: Text('${car.owner.namn} - ${car.color}'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit),
+                                  onPressed: () => _showVehicleDialog(context, vehicle: car),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () => _deleteVehicle(car.id.toString()),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

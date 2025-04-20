@@ -31,6 +31,7 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        centerTitle: true,
         backgroundColor: Colors.green,
       ),
       body: _screens[_selectedIndex],

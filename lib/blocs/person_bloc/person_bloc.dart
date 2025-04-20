@@ -32,29 +32,32 @@ class PersonBloc extends Bloc<PersonEvent, PersonState> {
     });
 
     on<UpdatePerson>((event, emit) async {
-      if (state is PersonLoaded) {
-        try {
-            await repository.update(event.person.id, event.person); 
-          final updatedList = (state as PersonLoaded).persons.map((p) {
-            return p.id == event.person.id ? event.person : p;
-          }).toList();
-          emit(PersonLoaded(updatedList));
-        } catch (e) {
-          emit(PersonError('Failed to update person: $e'));
-        }
-      }
-    });
+    if (state is PersonLoaded) {
+    
+    try {
+      await repository.update(int.parse(event.person.id), event.person);
+      final updatedList = (state as PersonLoaded).persons.map((p) {
+        return p.id == event.person.id ? event.person : p;
+      }).toList();
 
-    on<DeletePerson>((event, emit) async {
-      if (state is PersonLoaded) {
-        try {
-          await repository.deleteById(event.id);
-          final updatedList = (state as PersonLoaded).persons.where((p) => p.id != event.id).toList();
-          emit(PersonLoaded(updatedList));
-        } catch (e) {
-          emit(PersonError('Failed to delete person: $e'));
-        }
-      }
-    });
+      emit(PersonLoaded(updatedList));
+
+    } catch (e) {
+      emit(PersonError('Failed to update person: $e'));
+    }
   }
+});
+
+
+ on<DeletePerson>((event, emit) async {
+  try {
+  await repository.deleteById(int.parse(event.id));
+    final persons = await repository.findAll();
+    emit(PersonLoaded(persons));
+  } catch (e) {
+    emit(PersonError('Failed to delete person'));
+  }
+});
+
+}
 }

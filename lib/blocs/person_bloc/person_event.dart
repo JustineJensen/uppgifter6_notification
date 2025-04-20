@@ -28,10 +28,11 @@ class UpdatePerson extends PersonEvent {
 }
 
 class DeletePerson extends PersonEvent {
-  final int id;
+  final String id;
 
   DeletePerson(this.id);
 
   @override
   List<Object?> get props => [id];
 }
+

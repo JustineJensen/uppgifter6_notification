@@ -14,12 +14,12 @@ class ParkingSpaceInitial extends ParkingSpaceState {}
 class ParkingSpaceLoading extends ParkingSpaceState {}
 
 class ParkingSpaceLoaded extends ParkingSpaceState {
-  final List<ParkingSpace> ParkingSpaces;
+  final List<ParkingSpace> parkingSpaces;
 
-  const ParkingSpaceLoaded(this.ParkingSpaces);
+  const ParkingSpaceLoaded(this.parkingSpaces);
 
   @override
-  List<Object?> get props => [ParkingSpaces];
+  List<Object?> get props => [parkingSpaces];
 }
 
 class ParkingSpaceError extends ParkingSpaceState {
@@ -29,4 +29,21 @@ class ParkingSpaceError extends ParkingSpaceState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class AvailableParkingSpacesLoaded extends ParkingSpaceState {
+  final List<ParkingSpace> availableSpaces;
+
+  const AvailableParkingSpacesLoaded(this.availableSpaces);
+
+  @override
+  List<Object?> get props => [availableSpaces];
+}
+class ParkingSpaceOperationFailure extends ParkingSpaceState {
+  final String error;
+
+  const ParkingSpaceOperationFailure(this.error);
+
+  @override
+  List<Object?> get props => [error];
 }

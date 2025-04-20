@@ -1,103 +1,107 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uppgift3_new_app/models/car.dart';
 import 'package:uppgift3_new_app/models/vehicle.dart';
 import 'package:uppgift3_new_app/repositories/file_repository.dart';
 
-
-
 class VehicleRepository extends FileRepository<Vehicle, int> {
-  final String _baseUrl = 'http://localhost:8082/vehicles';
 
-  VehicleRepository._internal():super('vehicle_data.json');
+  FirebaseFirestore? _firestore;
+
+  CollectionReference get _collection {
+  
+    _firestore ??= FirebaseFirestore.instance;
+    return _firestore!.collection('vehicles');
+  }
+
+  VehicleRepository._internal() : super('vehicle_data.json');
+
   static final VehicleRepository _instance = VehicleRepository._internal();
   static VehicleRepository get instance => _instance;
 
-@override
- Future<Vehicle> add(Vehicle vehicle) async {
-  try {
-    final response = await http.post(
-      Uri.parse(_baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(vehicle.toJson()),
-    ).timeout(Duration(seconds: 10)); 
+  @override
+  Future<Vehicle> add(Vehicle vehicle) async {
+    try {
+      final snapshot = await _collection.orderBy('id', descending: true).limit(1).get();
+      int nextId = 1;
+      if (snapshot.docs.isNotEmpty) {
+        final maxId = (snapshot.docs.first.data() as Map<String, dynamic>)['id'] ?? 0;
+        nextId = maxId + 1;
+      }
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return Car.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to create vehicle: ${response.statusCode}. Response body: ${response.body}');
+      final newVehicle = (vehicle as Car).copyWith(id: nextId);
+      await _collection.add(newVehicle.toJson());
+
+      return newVehicle;
+    } catch (e) {
+      throw Exception('Error adding vehicle: $e');
     }
-  } catch (e) {
-    rethrow;
   }
-}
 
   @override
   Future<void> deleteById(int id) async {
-    final response = await http.delete(Uri.parse('$_baseUrl/$id'));
-
-    if (response.statusCode != 204) {
-      throw Exception('Failed to delete vehicle: ${response.statusCode}');
+    try {
+      final snapshot = await _collection.where('id', isEqualTo: id).limit(1).get();
+      if (snapshot.docs.isNotEmpty) {
+        await _collection.doc(snapshot.docs.first.id).delete();
+      } else {
+        throw Exception('Vehicle with id $id not found');
+      }
+    } catch (e) {
+      throw Exception('Error deleting vehicle: $e');
     }
   }
 
   @override
   Future<List<Vehicle>> findAll() async {
-    final response = await http.get(Uri.parse(_baseUrl));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Car.fromJson(json)).toList(); 
-    } else {
-      throw Exception('Failed to load vehicles: ${response.statusCode}');
+    try {
+      final snapshot = await _collection.get();
+      return snapshot.docs
+          .map((doc) => Car.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Error fetching vehicles: $e');
     }
   }
 
   @override
   Future<Vehicle> findById(int id) async {
-    final response = await http.get(Uri.parse('$_baseUrl/$id'));
-
-    if (response.statusCode == 200) {
-      return Car.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to load vehicle: ${response.statusCode}');
+    try {
+      final snapshot = await _collection.where('id', isEqualTo: id).limit(1).get();
+      if (snapshot.docs.isEmpty) throw Exception('Vehicle not found');
+      return Car.fromJson(snapshot.docs.first.data() as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Error finding vehicle: $e');
     }
   }
 
- Future<Vehicle> update(int id, Vehicle newVehicle) async {
-    final response = await http.put(
-      Uri.parse('$_baseUrl/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(newVehicle.toJson()),
-    );
+  @override
+  Future<Vehicle> update(int id, Vehicle newVehicle) async {
+    try {
+      final snapshot = await _collection.where('id', isEqualTo: id).limit(1).get();
+      if (snapshot.docs.isEmpty) throw Exception('Vehicle not found');
 
-    if (response.statusCode == 200) {
-      final vehicles = await readFile();
-      final index = vehicles.indexWhere((vehicle) => vehicle.id == id);
-      if (index == -1) throw Exception("Vehicle not found");
-      vehicles[index] = newVehicle;
-      await writeFile(vehicles);
-
-      return Car.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to update vehicle: ${response.statusCode}');
+      await _collection.doc(snapshot.docs.first.id).update(newVehicle.toJson());
+      return newVehicle;
+    } catch (e) {
+      throw Exception('Error updating vehicle: $e');
     }
   }
-
 
   @override
   Future<Vehicle> findByRegNum(String regNum) async {
-    final response = await http.get(Uri.parse('$_baseUrl?registreringsNummer=$regNum'));
+    try {
+      final snapshot = await _collection
+          .where('registreringsNummer', isEqualTo: regNum)
+          .limit(1)
+          .get();
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      if (data.isNotEmpty) {
-        return Car.fromJson(data.first); 
-      } else {
+      if (snapshot.docs.isEmpty) {
         throw Exception('Vehicle with registration number $regNum not found');
       }
-    } else {
-      throw Exception('Failed to load vehicle: ${response.statusCode}');
+
+      return Car.fromJson(snapshot.docs.first.data() as Map<String, dynamic>);
+    } catch (e) {
+      throw Exception('Error finding vehicle by reg number: $e');
     }
   }
 
@@ -105,21 +109,21 @@ class VehicleRepository extends FileRepository<Vehicle, int> {
   Future<Vehicle?> getVehicleByRegNum(String regNum) async {
     try {
       return await findByRegNum(regNum);
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
-  
+
   @override
   Vehicle fromJson(Map<String, dynamic> json) {
-   return Car.fromJson(json);
+    return Car.fromJson(json);
   }
-  
+
   @override
   int idFromType(Vehicle vehicle) {
     return vehicle.id;
   }
-  
+
   @override
   Map<String, dynamic> toJson(Vehicle vehicle) {
     return vehicle.toJson();

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uppgift3_new_app/models/person.dart';
 import 'package:uppgift3_new_app/models/vehicle.dart';
 import 'package:uppgift3_new_app/models/vhicletype.dart';
@@ -7,18 +8,12 @@ class Car extends Vehicle {
 
   // Constructor
   Car({
-    required int id,
-    required String registreringsNummer,
-    required VehicleType typ,
-    required Person owner,
+    required super.id,
+    required super.registreringsNummer,
+    required super.typ,
+    required super.owner,
     required String color,
-  })  : _color = color,
-        super(
-          id: id,
-          registreringsNummer: registreringsNummer,
-          typ: typ,
-          owner: owner,
-        );
+  })  : _color = color;
 
   // Getters
   String get color => _color;
@@ -62,6 +57,12 @@ class Car extends Vehicle {
       color: color ?? this.color,
     );
   }
+    factory Car.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    data['id'] ??= int.tryParse(doc.id) ?? DateTime.now().millisecondsSinceEpoch;
+
+    return Car.fromJson(data);
+  }
 
   factory Car.fromJson(Map<String, dynamic> json) {
     print('Parsing JSON: $json');
@@ -92,7 +93,7 @@ class Car extends Vehicle {
 
     Person owner;
     try {
-      owner = Person.fromJson(ownerJson);
+      owner = Person.fromJson(ownerJson, ownerJson['id'].toString());
     } catch (e) {
       throw Exception('Invalid owner data: $ownerJson');
     }

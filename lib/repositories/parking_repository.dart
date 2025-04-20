@@ -1,94 +1,137 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uppgift3_new_app/models/parking.dart';
+import 'package:uppgift3_new_app/models/parking_space.dart';
 import 'package:uppgift3_new_app/repositories/file_repository.dart';
-
+import 'package:uppgift3_new_app/repositories/parking_space_repository.dart';
 
 class ParkingRepository extends FileRepository<Parking, int> {
-  final String baseUrl = 'http://localhost:8082/parking';
-  int _nextId=1;
-  ParkingRepository._internal() : super('parking_data.json');
-  static final ParkingRepository _instance = ParkingRepository._internal();
-  static ParkingRepository get instance => _instance;
-
   
+  static ParkingRepository _instance = ParkingRepository._internal();
+  static ParkingRepository get instance => _instance;
+  final CollectionReference _parkingCollection = FirebaseFirestore.instance.collection('parkings');
+
+  FirebaseFirestore? _firestore;
+  
+  CollectionReference get _collection {
+    _firestore ??= FirebaseFirestore.instance;
+    return _firestore!.collection('parkings');
+  }
+
+  ParkingRepository._internal() : super('parking_data.json');
+
+  // Add new parking 
   @override
   Future<Parking> add(Parking parking) async {
     try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(parking.toJson()),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Parking.fromJson(jsonDecode(response.body));
-      } else {
-        throw Exception('Failed to add parking (HTTP ${response.statusCode}): ${response.body}');
+      final allDocs = await _collection.orderBy('id', descending: true).limit(1).get();
+      int nextId = 1;
+      if (allDocs.docs.isNotEmpty) {
+        final data = allDocs.docs.first.data() as Map<String, dynamic>;
+        final maxId = data['id'] ?? 0;
+        nextId = maxId + 1;
       }
+
+      final newParking = parking.copyWith(id: nextId .toString());
+      await _collection.add(newParking.toJson());
+
+      return newParking;
     } catch (e) {
       throw Exception('Error adding parking: $e');
     }
   }
 
+  // Delete parking by ID 
   @override
   Future<void> deleteById(int id) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/$id'));
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to delete parking (HTTP ${response.statusCode})');
+      final query = await _collection.where('id', isEqualTo: id).limit(1).get();
+      if (query.docs.isNotEmpty) {
+        await _collection.doc(query.docs.first.id).delete();
+      } else {
+        throw Exception('Parking with id $id not found');
       }
     } catch (e) {
       throw Exception('Error deleting parking: $e');
     }
   }
 
-  @override
-  Future<List<Parking>> findAll() async {
+    Future<Parking> updateByDocId(String docId, Parking newParking) async {
     try {
-      final response = await http.get(Uri.parse(baseUrl));
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body);
-        return jsonList.map((json) => Parking.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to fetch parkings (HTTP ${response.statusCode})');
-      }
+      await _collection.doc(docId).update(newParking.toJson()); 
+      return newParking;
     } catch (e) {
-      throw Exception('Error fetching parkings: $e');
+      throw Exception('Error updating parking: $e');
     }
   }
 
+  Future<void> deleteByDocId(String docId) async {
+      try {
+        await _collection.doc(docId).delete();
+      } catch (e) {
+        throw Exception('Error deleting parking: $e');
+      }
+    }
+
+  // Get all parking 
+    @override
+    Future<List<Parking>> findAll() async {
+      try {
+        final snapshot = await _collection.get();
+        return snapshot.docs.map((doc) {
+          return Parking.fromJson(doc.data() as Map<String, dynamic>, docId: doc.id);
+        }).toList();
+      } catch (e) {
+        throw Exception('Error fetching parkings: $e');
+      }
+   }
+
+
+  // Find a specific parking by ID
   @override
   Future<Parking> findById(int id) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/$id'));
-      if (response.statusCode == 200) {
-        return Parking.fromJson(jsonDecode(response.body));
-      } else {
-        throw Exception('Parking not found (HTTP ${response.statusCode})');
+      final snapshot = await _collection.where('id', isEqualTo: id).limit(1).get();
+      if (snapshot.docs.isEmpty) {
+        throw Exception('Parking not found');
       }
+
+      return Parking.fromJson(snapshot.docs.first.data() as Map<String, dynamic>); 
     } catch (e) {
       throw Exception('Error finding parking: $e');
     }
   }
 
-@override
+  // Update parking by ID in Firestore
+  @override
   Future<Parking> update(int id, Parking newParking) async {
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/$id'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(newParking.toJson()), 
-      );
-
-      if (response.statusCode == 200) {
-        return newParking;  
-      } else {
-        throw Exception('Failed to update parking (HTTP ${response.statusCode})');
+      if (newParking.docId == null) {
+        throw Exception('Cannot update parking: docId is null');
       }
+
+      await _collection.doc(newParking.docId).update(newParking.toJson());
+      return newParking;
     } catch (e) {
       throw Exception('Error updating parking: $e');
     }
   }
+  
+  Future<void> startParking(Parking parking) async {
+    // Add parking to the database
+    try {
+      await _parkingCollection.add(parking.toJson());
+    } catch (e) {
+      throw Exception("Failed to start parking: $e");
+    }
+  }
+  Future<void> endParking(String docId) async {
+  final parking = await getParkingByDocId(docId);
+  if (parking != null) {
+    final updated = parking.copyWith(endTime: DateTime.now());
+    await update(int.parse(updated.id), updated); 
+  }
+}
+
 
   @override
   Parking fromJson(Map<String, dynamic> json) {
@@ -97,15 +140,17 @@ class ParkingRepository extends FileRepository<Parking, int> {
 
   @override
   int idFromType(Parking parking) {
-    return parking.id;
+    return int.parse(parking.id);
   }
 
   @override
   Map<String, dynamic> toJson(Parking parking) {
-   return parking.toJson();
+    return parking.toJson();
   }
-  Future<int> getNextId() async {
-  return _nextId++;
-}
 
+  
+  getParkingByDocId(String docId) {
+    return docId;
+  }
+  
 }

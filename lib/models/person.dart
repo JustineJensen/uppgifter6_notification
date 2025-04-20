@@ -1,17 +1,16 @@
+
 class Person {
-  static int _idCounter = 0;
-  final int id;
+  final String id; 
   late String _namn;
   late int _personNummer;
 
   // Constructor
   Person({
+    this.id = '',
     required String namn,
-    required int personNummer,
-    int? id, 
+    required int personNummer
   })  : _namn = namn,
-        _personNummer = personNummer,
-        id = id ?? ++_idCounter; 
+        _personNummer = personNummer;
 
   // Getters
   String get namn => _namn;
@@ -27,11 +26,22 @@ class Person {
       throw Exception("Person number must be 12 digits");
     }
   }
+  Person copyWith({
+    String? id,
+    String? namn,
+    int? personNummer,
+  }) {
+    return Person(
+      id: id ?? this.id,
+      namn: namn ?? this.namn,
+      personNummer: personNummer ?? this.personNummer,
+    );
+  }
 
   // JSON Serialization
-  factory Person.fromJson(Map<String, dynamic> json) {
+  factory Person.fromJson(Map<String, dynamic> json, String docId) {
     return Person(
-      id: json['id'], 
+      id: docId,
       namn: json['namn'],
       personNummer: json['personNummer'] ?? 0,
     );
@@ -43,15 +53,6 @@ class Person {
       "namn": namn,
       "personNummer": personNummer,
     };
-  }
-
-  // Copy with new ID
-  Person copyWith({int? id}) {
-    return Person(
-      id: id ?? this.id,
-      namn: namn,
-      personNummer: personNummer,
-    );
   }
 
   @override

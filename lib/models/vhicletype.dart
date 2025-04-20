@@ -1,13 +1,12 @@
 enum VehicleType {
   Bil,
   Motorcycle,
-  Lastbil,
+  Lastbil, car
 
 }
-
 extension VehicleTypeExtension on VehicleType {
   String toJson() {
-    return this.name;
+    return name;
   }
 
   static VehicleType fromJson(dynamic json) {

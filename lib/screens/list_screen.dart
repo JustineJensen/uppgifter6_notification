@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
-
 class ListScreen extends StatelessWidget {
   const ListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final List<Map<String, dynamic>> options = [
-       {
+      {
         'title': 'Persons',
         'icon': Icons.person,
         'route': '/person',
@@ -32,21 +30,28 @@ class ListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('List of Options'),
-        backgroundColor: Colors.green,
+        title: const Text('Menu'),
+        centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: options.length,
-        itemBuilder: (context, index) {
-          final item = options[index];
-          return ListTile(
-            leading: Icon(item['icon']),
-            title: Text(item['title']),
-            onTap: () {
-              Navigator.pushNamed(context, item['route']);
-            },
-          );
-        },
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min, 
+          children: options.map((item) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+              child: ElevatedButton.icon(
+                icon: Icon(item['icon']),
+                label: Text(item['title']),
+                onPressed: () {
+                  Navigator.pushNamed(context, item['route']);
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(200, 50), 
+                ),
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

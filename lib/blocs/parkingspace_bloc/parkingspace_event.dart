@@ -10,6 +10,8 @@ abstract class ParkingSpaceEvent extends Equatable {
 }
 
 class LoadParkingSpaces extends ParkingSpaceEvent {}
+class LoadAvailableParkingSpaces extends ParkingSpaceEvent {}
+
 
 class AddParkingSpace extends ParkingSpaceEvent {
   final ParkingSpace parkingSpace;
@@ -77,3 +79,4 @@ class DeleteParkingSpace extends ParkingSpaceEvent {
   @override
   List<Object?> get props => [id];
 }
+

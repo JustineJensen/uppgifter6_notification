@@ -42,9 +42,9 @@ set adress(String adress)=>_adress= adress;
 }
 ParkingSpace copyWith({int? id, String? adress, double? pricePerHour}) {
     return ParkingSpace(
-      id: id ?? this._id,
-      adress: adress ?? this._adress,
-      pricePerHour: pricePerHour ?? this._pricePerHour,
+      id: id ?? _id,
+      adress: adress ?? _adress,
+      pricePerHour: pricePerHour ?? _pricePerHour,
     );
   
   }
