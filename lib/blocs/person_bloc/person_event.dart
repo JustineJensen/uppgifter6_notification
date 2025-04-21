@@ -28,7 +28,7 @@ class UpdatePerson extends PersonEvent {
 }
 
 class DeletePerson extends PersonEvent {
-  final String id;
+  final int id;
 
   DeletePerson(this.id);
 

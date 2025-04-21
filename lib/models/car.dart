@@ -93,7 +93,7 @@ class Car extends Vehicle {
 
     Person owner;
     try {
-      owner = Person.fromJson(ownerJson, ownerJson['id'].toString());
+      owner = Person.fromJson(ownerJson);
     } catch (e) {
       throw Exception('Invalid owner data: $ownerJson');
     }

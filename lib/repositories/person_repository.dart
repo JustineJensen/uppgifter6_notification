@@ -16,24 +16,23 @@ class PersonRepository {
   PersonRepository._internal();
 
   Future<Person> add(Person person) async {
-    try {
-      final allDocs = await _personCollection.orderBy('id', descending: true).limit(1).get();
-      int nextId = 1;
-      if (allDocs.docs.isNotEmpty) {
-        final data = allDocs.docs.first.data() as Map<String, dynamic>;
-        final maxId = data['id'] ?? 0;
-
-        nextId = maxId + 1;
-      }
-
-      final newPerson = person.copyWith(id: nextId.toString());
-      await _personCollection.add(newPerson.toJson());
-
-      return newPerson;
-    } catch (e) {
-      throw Exception('Error adding person: $e');
+  try {
+    final allDocs = await _personCollection.orderBy('id', descending: true).limit(1).get();
+    
+    int nextId = 1;
+    if (allDocs.docs.isNotEmpty) {
+      final data = allDocs.docs.first.data() as Map<String, dynamic>;
+      final maxId = data['id'] ?? 0;
+      nextId = maxId + 1;  
     }
+    final newPerson = person.copyWith(id: nextId);
+    await _personCollection.doc(nextId.toString()).set(newPerson.toJson());
+
+    return newPerson;
+  } catch (e) {
+    throw Exception('Error adding person: $e');
   }
+}
 
   Future<void> deleteById(int id) async {
     try {
@@ -52,13 +51,12 @@ class PersonRepository {
   try {
     final snapshot = await _personCollection.get();
     return snapshot.docs
-        .map((doc) => Person.fromJson(doc.data() as Map<String, dynamic>, doc.id))
-        .toList();
+        .map((doc) => Person.fromJson(doc.data() as Map<String, dynamic>))
+    .toList();
   } catch (e) {
     throw Exception('Error fetching persons: $e');
   }
 }
-
   /// Find person by int id
   Future<Person?> findById(int id) async {
     try {
@@ -66,7 +64,7 @@ class PersonRepository {
       if (query.docs.isEmpty) return null;
 
       final doc = query.docs.first;
-      return Person.fromJson(doc.data() as Map<String, dynamic>, doc.id);
+      return Person.fromJson(doc.data() as Map<String, dynamic>);
 
     } catch (e) {
       throw Exception('Error finding person: $e');

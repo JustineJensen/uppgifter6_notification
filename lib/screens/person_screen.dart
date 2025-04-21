@@ -30,50 +30,46 @@ class PersonScreenContent extends StatelessWidget {
                     final nameController = TextEditingController();
                     final personNummerController = TextEditingController();
 
-                    return Builder(
-                      builder: (innerContext) => AlertDialog(
-                        title: const Text('Add New Person'),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextField(
-                              controller: nameController,
-                              decoration: const InputDecoration(labelText: 'Name'),
-                            ),
-                            TextField(
-                              controller: personNummerController,
-                              decoration: const InputDecoration(labelText: 'Personnummer (12 digits)'),
-                              keyboardType: TextInputType.number,
-                            ),
-                          ],
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(innerContext),
-                            child: const Text('Cancel'),
+                    return AlertDialog(
+                      title: const Text('Add New Person'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: nameController,
+                            decoration: const InputDecoration(labelText: 'Name'),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              final namn = nameController.text.trim();
-                              final pnr = int.tryParse(personNummerController.text.trim());
-
-                              if (namn.isEmpty || pnr == null || personNummerController.text.length != 12) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Please enter valid data (12-digit personnummer).")),
-                                );
-                                return;
-                              }
-
-                              final newPerson = Person(namn: namn, personNummer: pnr);
-                              innerContext.read<PersonBloc>().add(AddPerson(newPerson)); 
-                              Navigator.pop(innerContext);  
-                            },
-                            child: const Text('Add'),
+                          TextField(
+                            controller: personNummerController,
+                            decoration: const InputDecoration(labelText: 'Personnummer (12 digits)'),
+                            keyboardType: TextInputType.number,
                           ),
-
-
                         ],
                       ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            final namn = nameController.text.trim();
+                            final pnr = int.tryParse(personNummerController.text.trim());
+
+                            if (namn.isEmpty || pnr == null || personNummerController.text.length != 12) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please enter valid data (12-digit personnummer).")),
+                              );
+                              return;
+                            }
+
+                            final newPerson = Person(namn: namn, personNummer: pnr);
+                            context.read<PersonBloc>().add(AddPerson(newPerson));  
+                            Navigator.pop(dialogContext);
+                          },
+                          child: const Text('Add'),
+                        ),
+                      ],
                     );
                   },
                 );
@@ -137,7 +133,24 @@ class ViewPersonsScreen extends StatelessWidget {
                   child: ListTile(
                     title: Text(person.namn),
                     subtitle: Text('Personnummer: ${person.personNummer}'),
-                    onTap: () => _showEditDialog(context, person), 
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _showEditDialog(context, person),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            context.read<PersonBloc>().add(DeletePerson(person.id));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Deleted ${person.namn}')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -147,58 +160,55 @@ class ViewPersonsScreen extends StatelessWidget {
         },
       ),
     );
-    
   }
-  
-  void _showEditDialog(BuildContext context, Person person) {
-  final nameController = TextEditingController(text: person.namn);
-  final pnrController = TextEditingController(text: person.personNummer.toString());
 
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Edit Person'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: nameController,
-            decoration: const InputDecoration(labelText: 'Name'),
+  void _showEditDialog(BuildContext context, Person person) {
+    final nameController = TextEditingController(text: person.namn);
+    final pnrController = TextEditingController(text: person.personNummer.toString());
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Person'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
+            TextField(
+              controller: pnrController,
+              decoration: const InputDecoration(labelText: 'Personnummer'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-          TextField(
-            controller: pnrController,
-            decoration: const InputDecoration(labelText: 'Personnummer'),
-            keyboardType: TextInputType.number,
+          TextButton(
+            onPressed: () {
+              final newName = nameController.text.trim();
+              final newPnr = int.tryParse(pnrController.text.trim());
+
+              if (newName.isEmpty || newPnr == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Invalid input")),
+                );
+                return;
+              }
+
+              final updatedPerson = person.copyWith(namn: newName, personNummer: newPnr);
+              context.read<PersonBloc>().add(UpdatePerson(updatedPerson));
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
           ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed: () {
-            final newName = nameController.text.trim();
-            final newPnr = int.tryParse(pnrController.text.trim());
-
-            if (newName.isEmpty || newPnr == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Invalid input")),
-              );
-              return;
-            }
-
-            final updatedPerson = person.copyWith(namn: newName, personNummer: newPnr);
-            context.read<PersonBloc>().add(UpdatePerson(updatedPerson));
-            Navigator.pop(context);
-          },
-          child: const Text('Save'),
-        ),
-      ],
-    ),
-  );
-}
-
-  
+    );
+  }
 }
