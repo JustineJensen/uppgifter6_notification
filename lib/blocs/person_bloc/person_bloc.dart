@@ -28,19 +28,15 @@ class PersonBloc extends Bloc<PersonEvent, PersonState> {
       }
     });
 
-      on<UpdatePerson>((event, emit) async {
-      if (state is PersonLoaded) {
-        try {
+       on<UpdatePerson>((event, emit) async {
+      emit(PersonLoading());
+      try {
 
-          await repository.update(event.person.id, event.person);
-          final updatedList = (state as PersonLoaded).persons.map((p) {
-            return p.id == event.person.id ? event.person : p;
-          }).toList();
-
-          emit(PersonLoaded(updatedList));
-        } catch (e) {
-          emit(PersonError('Failed to update person: $e'));
-        }
+        await repository.update(event.person.id, event.person);
+        final allPersons = await repository.findAll();
+        emit(PersonLoaded(allPersons));
+      } catch (e) {
+        emit(PersonError('Failed to update person: $e'));
       }
     });
 
