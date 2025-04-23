@@ -1,32 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uppgift3_new_app/models/car.dart';
-import 'package:uppgift3_new_app/models/person.dart';
-import 'package:uppgift3_new_app/models/vehicle.dart';
-import 'package:uppgift3_new_app/models/vhicletype.dart';
+import 'package:uppgift1/models/car.dart';
+import 'package:uppgift1/models/person.dart';
+import 'package:uppgift1/models/vehicleType.dart';
+import 'package:uppgift3_new_app/repositories/vehicleRepository.dart';
 
-final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-final CollectionReference vehiclesCollection = _firestore.collection('vehicles');
 
-class VehicleScreenContent extends StatefulWidget {
-  const VehicleScreenContent({super.key});
 
+
+class VehicleView extends StatefulWidget {
+  const VehicleView({super.key});
+  
   @override
-  _VehicleScreenState createState() => _VehicleScreenState();
-}
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    throw UnimplementedError();
+  }
 
-class _VehicleScreenState extends State<VehicleScreenContent> {
+  
+}
+/*
+class _VehicleScreenState extends State<VehicleView> {
   List<Car> vehicles = [];
 
   Future<void> _fetchVehicles() async {
     try {
-      QuerySnapshot snapshot = await vehiclesCollection.get();
+      QuerySnapshot snapshot = await vehicleRepository.add();
       print('Fetched documents: ${snapshot.docs.length}');
 
       setState(() {
         vehicles = snapshot.docs.map((doc) {
           print('Document data: ${doc.data()}');
-          return Car.fromFirestore(doc);
+          return Car.fromJson(json);
         }).toList();
       });
     } catch (e) {
@@ -207,4 +212,4 @@ class _VehicleScreenState extends State<VehicleScreenContent> {
       ),
     );
   }
-}
+}*/

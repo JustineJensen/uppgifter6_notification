@@ -1,32 +1,26 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';  
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uppgift3_new_app/blocs/parking_bloc/parking_bloc.dart';
-import 'package:uppgift3_new_app/blocs/parking_bloc/parking_event.dart';
-import 'package:uppgift3_new_app/blocs/person_bloc/person_bloc.dart';
-import 'package:uppgift3_new_app/blocs/person_bloc/person_event.dart';
-import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_bloc.dart';
-import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_event.dart';
 import 'package:uppgift3_new_app/firebase_options.dart';
-import 'package:uppgift3_new_app/repositories/parking_repository.dart';
-import 'package:uppgift3_new_app/repositories/person_repository.dart';
-import 'package:uppgift3_new_app/repositories/vehicleRepository.dart';
-import 'package:uppgift3_new_app/screens/home.dart';
-import 'package:uppgift3_new_app/screens/landingpage.dart';
-import 'package:uppgift3_new_app/screens/login_screen.dart';
-import 'package:uppgift3_new_app/screens/parking_space_screen.dart';
-import 'package:uppgift3_new_app/screens/person_screen.dart';
-import 'package:uppgift3_new_app/screens/vehicle_screen.dart';
-import 'package:uppgift3_new_app/screens/parking_screen.dart';
+import 'package:uppgift3_new_app/views/home.dart';
+import 'package:uppgift3_new_app/views/landingpage.dart';
+import 'package:uppgift3_new_app/views/login_view.dart';
+import 'package:uppgift3_new_app/views/person_view.dart';
+import 'package:uppgift3_new_app/views/vehicle_view.dart';  
+import 'package:uppgift3_new_app/views/parking_view.dart'; 
+import 'package:uppgift3_new_app/views/parking_space_view.dart'; 
+import 'package:firebase_core/firebase_core.dart'; 
 
-Future<void> main() async {
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    runApp(const MyApp());
+  } catch (e) {
+    print('Firebase init failed: $e');
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -47,34 +41,22 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<PersonBloc>(
-          create: (_) => PersonBloc(repository: PersonRepository.instance)..add(LoadPersons()),
-        ),
-        BlocProvider<VehicleBloc>(
-          create: (_) => VehicleBloc(vehicleRepository: VehicleRepository.instance)..add(LoadVehicles()),
-        ),
-        BlocProvider<ParkingBloc>(
-          create: (_) => ParkingBloc(parkingRepository: ParkingRepository.instance)..add(LoadParkings()),
-        ),
-      ],
-      child: MaterialApp(
-        title: 'Parking App',
-        themeMode: _themeMode,  
-        theme: ThemeData.light(), 
-        darkTheme: ThemeData.dark(), 
-        home: const LandingPage(),
-        routes: {
-          '/person': (context) => const PersonScreenContent(),
-          '/vehicles': (context) => const VehicleScreenContent(),
-          '/parking': (context) => ParkingScreenContent(),
-          '/parkingplaces': (context) => const ParkingSpacecontent(),
-        },
-      ),
+    return MaterialApp(
+      title: 'Parking App',
+      themeMode: _themeMode,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: const AuthGate(),  
+      routes: {
+        '/person': (context) => const PersonView(),
+        '/vehicles': (context) => const VehicleView(),
+        '/parking': (context) => const ParkingView(),
+        '/parkingplaces': (context) => const ParkingSpaceView(),
+      },
     );
   }
 }
+
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -83,10 +65,11 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     final FirebaseAuth auth = FirebaseAuth.instance;
     User? user = auth.currentUser;
+
     if (user != null) {
       return const Home(title: 'Parking App');
     } else {
-      return LoginScreen();
+      return  LandingPage();
     }
   }
 }

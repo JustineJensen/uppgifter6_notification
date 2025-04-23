@@ -1,31 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_bloc.dart';
-import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_event.dart';
-import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_state_bloc.dart';
-import 'package:uppgift3_new_app/models/parking_space.dart';
-import 'package:uppgift3_new_app/repositories/parking_space_repository.dart';
+import 'package:uppgift1/models/parkingSpace.dart';
 
-class ParkingSpacecontent extends StatefulWidget {
-  const ParkingSpacecontent({super.key});
 
+class ParkingSpaceView extends StatefulWidget {
+  const ParkingSpaceView({super.key});
+  
   @override
-  State<ParkingSpacecontent> createState() => _ParkingSpacecontentState();
-}
+  State<StatefulWidget> createState() {
+    // TODO: implement createState
+    throw UnimplementedError();
+  }
 
-class _ParkingSpacecontentState extends State<ParkingSpacecontent> {
-  late ParkingSpaceBloc _bloc;
+}
+/*
+class _ParkingSpacecontentState extends State<ParkingSpaceView> {
+ 
 
   @override
   void initState() {
     super.initState();
-    _bloc = ParkingSpaceBloc(repository: ParkingSpaceRepository.instance);
-    _bloc.add(LoadParkingSpaces());
+   
   }
 
   @override
   void dispose() {
-    _bloc.close();
+  
     super.dispose();
   }
 
@@ -256,3 +258,4 @@ class _ParkingSpacecontentState extends State<ParkingSpacecontent> {
     );
   }
 }
+*/

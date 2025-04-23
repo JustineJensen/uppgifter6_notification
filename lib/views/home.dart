@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:uppgift3_new_app/screens/home_screen.dart';
-import 'package:uppgift3_new_app/screens/list_screen.dart';
-import 'package:uppgift3_new_app/screens/profile_screen.dart';
+import 'package:uppgift3_new_app/views/home_view.dart';
+import 'package:uppgift3_new_app/views/list_view.dart';
+import 'package:uppgift3_new_app/views/profile_view.dart';
+import 'package:uppgift3_new_app/views/search_screen.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key, required this.title});
@@ -18,6 +19,8 @@ class _HomeState extends State<Home> {
     HomeScreenContent(),
     ListScreen(),
     ProfileScreen(),
+    SearchScreen(),
+
   ];
 
   void _onItemTapped(int index) {
@@ -56,6 +59,10 @@ class _HomeState extends State<Home> {
                   icon: Icon(Icons.person),
                   label: Text('Profile'),
                 ),
+                 NavigationRailDestination(
+                  icon: Icon(Icons.search),
+                  label: Text('Search'),
+                ),
               ],
             ),
           Expanded(child: _screens[_selectedIndex]),
@@ -71,6 +78,7 @@ class _HomeState extends State<Home> {
                 BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
                 BottomNavigationBarItem(icon: Icon(Icons.list), label: 'List'),
                 BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+                BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
               ],
             ),
     );

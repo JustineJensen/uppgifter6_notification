@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:uppgift3_new_app/main.dart';
-import 'package:uppgift3_new_app/screens/home.dart';
+import 'package:uppgift3_new_app/views/home.dart';
 
 class AuthService {
   Future<void> signup({
@@ -40,7 +40,7 @@ class AuthService {
     );
 
     } catch (e) {
-      // Add code here
+     throw Exception("");
     }
   }
 
@@ -79,7 +79,7 @@ class AuthService {
         );
 
     } catch (e) {
-      // Add code here
+      throw Exception("");
     }
   }
 

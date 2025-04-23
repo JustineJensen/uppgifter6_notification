@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:uppgift3_new_app/screens/signup_screen.dart';
+import 'package:uppgift3_new_app/views/signup_view.dart';
 import 'package:uppgift3_new_app/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 

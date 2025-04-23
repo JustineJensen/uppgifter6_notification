@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'uppgift3-ab122.firebasestorage.app',
     measurementId: 'G-3JQGVG5BD7',
   );
+
 }
