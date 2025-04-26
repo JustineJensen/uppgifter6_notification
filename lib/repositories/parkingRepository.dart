@@ -1,12 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:uppgift1/models/parking.dart';
-import 'package:uppgift1/repositories/repository.dart';
+import 'package:uppgift1/repositories/fileRepository.dart';
+import 'package:path_provider/path_provider.dart';
 
-class ParkingRepository extends Repository<Parking, int> {
+class ParkingRepository extends FileRepository<Parking, int> {
   final String baseUrl = 'http://10.0.2.2:8080/parking';
   int _nextId=1;
-  ParkingRepository._internal();
+  ParkingRepository._internal() : super('parking_data.json');
   static final ParkingRepository _instance = ParkingRepository._internal();
   static ParkingRepository get instance => _instance;
 
@@ -14,17 +16,11 @@ class ParkingRepository extends Repository<Parking, int> {
   @override
   Future<Parking> add(Parking parking) async {
     try {
-      print('Sending parking data: ${parking.toJson()}'); 
-      
       final response = await http.post(
         Uri.parse(baseUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(parking.toJson()),
       );
-
-      print('Response status: ${response.statusCode}'); 
-      print('Response body: ${response.body}'); 
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return Parking.fromJson(jsonDecode(response.body));
       } else {
@@ -76,23 +72,45 @@ class ParkingRepository extends Repository<Parking, int> {
     }
   }
 
-  @override
-  Future<void> update(Parking parking) async {
+@override
+  Future<Parking> update(int id, Parking newParking) async {
     try {
       final response = await http.put(
-        Uri.parse('$baseUrl/${parking.id}'),
+        Uri.parse('$baseUrl/$id'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(parking.toJson()),
+        body: jsonEncode(newParking.toJson()), 
       );
 
-      if (response.statusCode != 200) {
+      if (response.statusCode == 200) {
+        return newParking;  
+      } else {
         throw Exception('Failed to update parking (HTTP ${response.statusCode})');
       }
     } catch (e) {
       throw Exception('Error updating parking: $e');
     }
   }
-   Future<int> getNextId() async {
+
+  @override
+  Parking fromJson(Map<String, dynamic> json) {
+    return Parking.fromJson(json);
+  }
+
+  @override
+  int idFromType(Parking parking) {
+    return parking.id;
+  }
+
+  @override
+  Map<String, dynamic> toJson(Parking parking) {
+   return parking.toJson();
+  }
+  Future<int> getNextId() async {
   return _nextId++;
 }
+ Future<File> _getLocalFile(String filename) async {
+  final directory = await getApplicationDocumentsDirectory();
+  return File('${directory.path}/$filename');
+}
+
 }

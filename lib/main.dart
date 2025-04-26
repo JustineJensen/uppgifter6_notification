@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:uppgift3_new_app/firebase_options.dart';
 import 'package:uppgift3_new_app/views/home.dart';
 import 'package:uppgift3_new_app/views/landingpage.dart';
-import 'package:uppgift3_new_app/views/login_view.dart';
 import 'package:uppgift3_new_app/views/person_view.dart';
 import 'package:uppgift3_new_app/views/vehicle_view.dart';  
 import 'package:uppgift3_new_app/views/parking_view.dart'; 
@@ -56,6 +55,7 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+
 
 
 class AuthGate extends StatelessWidget {

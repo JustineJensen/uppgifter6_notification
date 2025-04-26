@@ -1,12 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:uppgift1/repositories/repository.dart';
+import 'package:uppgift1/repositories/fileRepository.dart';
 import 'package:uppgift1/models/parkingSpace.dart';
+import 'package:path_provider/path_provider.dart';
 
-class ParkingSpaceRepository extends Repository<ParkingSpace,int> {
+class ParkingSpaceRepository extends FileRepository<ParkingSpace,int> {
   int _nextId =0;
   final String baseUrl = 'http://10.0.2.2:8080/parkingSpaces';
-    ParkingSpaceRepository._internal();
+    ParkingSpaceRepository._internal():super('parkingSpace_data.json');
  
 
    static final ParkingSpaceRepository _instance = ParkingSpaceRepository._internal();
@@ -31,6 +33,7 @@ class ParkingSpaceRepository extends Repository<ParkingSpace,int> {
       throw Exception('Error adding parking Space: $e');
     }
    }
+
    
      @override
     Future <void> deleteById(int id)async {
@@ -60,17 +63,14 @@ class ParkingSpaceRepository extends Repository<ParkingSpace,int> {
 
      }
    
+     
     @override
   Future<ParkingSpace> findById(int id) async {
     try {
-      print('Fetching parking space with ID: $id'); 
       final response = await http.get(
         Uri.parse('$baseUrl/$id'),
         headers: {'Accept': 'application/json'},
       );
-
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}'); 
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
@@ -89,22 +89,44 @@ class ParkingSpaceRepository extends Repository<ParkingSpace,int> {
     }
   }
      @override
-     Future <void> update(ParkingSpace parkingSpace) async{
-      try {
+     Future <ParkingSpace> update(int id,ParkingSpace newParkingSpace) async{
+       try {
       final response = await http.put(
-        Uri.parse('$baseUrl/${parkingSpace.id}'),
+        Uri.parse('$baseUrl/$id'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(parkingSpace.toJson()),
+        body: jsonEncode(newParkingSpace.toJson()),
       );
 
       if (response.statusCode != 200) {
         throw Exception('Failed to update parking space (HTTP ${response.statusCode})');
       }
+      final updatedParkingSpace = ParkingSpace.fromJson(jsonDecode(response.body));
+      return updatedParkingSpace;
+
     } catch (e) {
       throw Exception('Error updating parking space: $e');
     }
   }
   Future<int> getNextId() async {
   return _nextId++;
+}
+
+  @override
+  ParkingSpace fromJson(Map<String, dynamic> json) {
+    return ParkingSpace.fromJson(json);
+  }
+
+  @override
+  int idFromType(ParkingSpace parkingSpace) {
+   return parkingSpace.id;
+  }
+
+  @override
+  Map<String, dynamic> toJson(ParkingSpace parkingSpace) {
+    return parkingSpace.toJson();
+  }
+    Future<File> _getLocalFile(String filename) async {
+  final directory = await getApplicationDocumentsDirectory();
+  return File('${directory.path}/$filename');
 }
   }

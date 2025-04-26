@@ -1,29 +1,27 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:uppgift1/models/car.dart'; 
 import 'package:uppgift1/models/vehicle.dart';
-import 'package:uppgift1/repositories/repository.dart';
+import 'package:uppgift1/repositories/fileRepository.dart';
+import 'package:path_provider/path_provider.dart';
 
-class VehicleRepository extends Repository<Vehicle, int> {
+class VehicleRepository extends FileRepository<Vehicle, int> {
   final String _baseUrl = 'http://10.0.2.2:8080/vehicles';
 
-  VehicleRepository._internal();
+   int _nextId =0;
+  VehicleRepository._internal():super('vehicle_data.json');
   static final VehicleRepository _instance = VehicleRepository._internal();
   static VehicleRepository get instance => _instance;
 
 @override
  Future<Vehicle> add(Vehicle vehicle) async {
   try {
-    print('Sending POST request to $_baseUrl with data: ${vehicle.toJson()}');
-    
     final response = await http.post(
       Uri.parse(_baseUrl),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(vehicle.toJson()),
     ).timeout(Duration(seconds: 10)); 
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       return Car.fromJson(jsonDecode(response.body));
@@ -31,7 +29,6 @@ class VehicleRepository extends Repository<Vehicle, int> {
       throw Exception('Failed to create vehicle: ${response.statusCode}. Response body: ${response.body}');
     }
   } catch (e) {
-    print('Error in VehicleRepository.add: $e');
     rethrow;
   }
 }
@@ -68,15 +65,23 @@ class VehicleRepository extends Repository<Vehicle, int> {
     }
   }
 
-  @override
-  Future<void> update(Vehicle entity) async {
+ @override
+  Future<Vehicle> update(int id, Vehicle newVehicle) async {
     final response = await http.put(
-      Uri.parse('$_baseUrl/${entity.id}'),
+      Uri.parse('$_baseUrl/$id'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(entity.toJson()),
+      body: jsonEncode(newVehicle.toJson()),
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      final vehicles = await readFile();
+      final index = vehicles.indexWhere((vehicle) => vehicle.id == id);
+      if (index == -1) throw Exception("Vehicle not found");
+      vehicles[index] = newVehicle;
+      await writeFile(vehicles);
+
+      return Car.fromJson(jsonDecode(response.body));
+    } else {
       throw Exception('Failed to update vehicle: ${response.statusCode}');
     }
   }
@@ -104,5 +109,27 @@ class VehicleRepository extends Repository<Vehicle, int> {
     } catch (e) {
       return null;
     }
+  }
+  
+  @override
+  Vehicle fromJson(Map<String, dynamic> json) {
+   return Car.fromJson(json);
+  }
+  
+  @override
+  int idFromType(Vehicle vehicle) {
+    return vehicle.id;
+  }
+  
+  @override
+  Map<String, dynamic> toJson(Vehicle vehicle) {
+    return vehicle.toJson();
+  }
+   Future<File> _getLocalFile(String filename) async {
+  final directory = await getApplicationDocumentsDirectory();
+  return File('${directory.path}/$filename');
+}
+  Future<int> getNextId() async {
+    return _nextId++;
   }
 }

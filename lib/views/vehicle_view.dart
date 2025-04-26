@@ -1,215 +1,311 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uppgift1/models/car.dart';
 import 'package:uppgift1/models/person.dart';
+import 'package:uppgift1/models/vehicle.dart';
 import 'package:uppgift1/models/vehicleType.dart';
 import 'package:uppgift3_new_app/repositories/vehicleRepository.dart';
 
-
-
-
-class VehicleView extends StatefulWidget {
+class VehicleView extends StatelessWidget {
   const VehicleView({super.key});
-  
-  @override
-  State<StatefulWidget> createState() {
-    // TODO: implement createState
-    throw UnimplementedError();
-  }
-
-  
-}
-/*
-class _VehicleScreenState extends State<VehicleView> {
-  List<Car> vehicles = [];
-
-  Future<void> _fetchVehicles() async {
-    try {
-      QuerySnapshot snapshot = await vehicleRepository.add();
-      print('Fetched documents: ${snapshot.docs.length}');
-
-      setState(() {
-        vehicles = snapshot.docs.map((doc) {
-          print('Document data: ${doc.data()}');
-          return Car.fromJson(json);
-        }).toList();
-      });
-    } catch (e) {
-      print('Error fetching vehicles: $e');
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchVehicles();
-  }
-
-  void _showVehicleDialog(BuildContext context, {Car? vehicle}) {
-    final regNrController = TextEditingController(text: vehicle?.registreringsNummer ?? '');
-    final colorController = TextEditingController(text: vehicle?.color ?? '');
-    final ownerNameController = TextEditingController(text: vehicle?.owner.namn ?? '');
-    final personNummerController = TextEditingController(text: vehicle?.owner.personNummer.toString() ?? '');
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(vehicle == null ? 'Add New Vehicle' : 'Update Vehicle'),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
-                controller: regNrController,
-                decoration: const InputDecoration(labelText: 'Registreringsnummer'),
-              ),
-              TextField(
-                controller: colorController,
-                decoration: const InputDecoration(labelText: 'Color'),
-              ),
-              TextField(
-                controller: ownerNameController,
-                decoration: const InputDecoration(labelText: 'Owner\'s name'),
-              ),
-              TextField(
-                controller: personNummerController,
-                decoration: const InputDecoration(labelText: 'Person Number (12 numbers)'),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              final regNr = regNrController.text.trim();
-              final color = colorController.text.trim();
-              final ownerName = ownerNameController.text.trim();
-              final personNummer = int.tryParse(personNummerController.text.trim());
-
-              if (regNr.isEmpty || color.isEmpty || ownerName.isEmpty || personNummer == null || personNummer.toString().length != 12) {
-                print('Invalid input');
-                return;
-              }
-
-              final car = Car(
-                id: DateTime.now().millisecondsSinceEpoch,
-                registreringsNummer: regNr,
-                typ: VehicleType.car,
-                color: color,
-                owner: Person(
-                  namn: ownerName,
-                  personNummer: personNummer,
-                ),
-              );
-
-              if (vehicle == null) {
-                await vehiclesCollection.add(car.toJson());
-              } else {
-                await vehiclesCollection.doc(vehicle.id.toString()).update(car.toJson());
-              }
-
-              Navigator.of(context).pop();
-              _fetchVehicles();
-            },
-            child: Text(vehicle == null ? 'Add' : 'Update'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _deleteVehicle(String vehicleId) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Vehicle'),
-        content: const Text('Do you want to delete this vehicle?'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              await vehiclesCollection.doc(vehicleId).delete();
-              setState(() {
-                vehicles.removeWhere((v) => v.id.toString() == vehicleId);
-              });
-              Navigator.of(context).pop();
-            },
-            child: const Text('Yes'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('No'),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Vehicles'),
-        backgroundColor: Colors.green,
+        title: const Text(' Manage Vehicles'),
+        leading: const BackButton(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Add and View All buttons
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _showVehicleDialog(context),
-                  child: const Text('Add New Vehicle'),
-                ),
-                const SizedBox(height: 5),
-                ElevatedButton(
-                  onPressed: () => _fetchVehicles(),
-                  child: const Text('View All Vehicles'),
-                ),
-              ],
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('Add New Vehicle'),
+              onPressed: () {
+                _showAddVehicleDialog(context);
+              },
             ),
-            const SizedBox(height: 10),
-            // Vehicle List
+            const SizedBox(height: 20),
+            // Main view for displaying vehicles list
             Expanded(
-              child: vehicles.isEmpty
-                  ? const Center(child: Text('No Vehicles available.'))
-                  : ListView.builder(
-                      itemCount: vehicles.length,
-                      itemBuilder: (context, index) {
-                        final car = vehicles[index];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: ListTile(
-                            leading: const Icon(Icons.directions_car),
-                            title: Text(car.registreringsNummer),
-                            subtitle: Text('${car.owner.namn} - ${car.color}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () => _showVehicleDialog(context, vehicle: car),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () => _deleteVehicle(car.id.toString()),
-                                ),
-                              ],
-                            ),
+              child: FutureBuilder<List<Vehicle>>(
+                future: VehicleRepository.instance.findAll(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No vehicles available.'));
+                  }
+
+                  final vehicles = snapshot.data!;
+
+                  return ListView.builder(
+                    itemCount: vehicles.length,
+                    itemBuilder: (context, index) {
+                      final vehicle = vehicles[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: ListTile(
+                          title: Text('ID: ${vehicle.id}'),
+                          subtitle: Text(
+                            'Reg Number: ${vehicle.registreringsNummer}\n'
+                            'Type: ${vehicle.typ.name}\n'
+                            'Owner: ${vehicle.owner.namn}',
                           ),
-                        );
-                      },
-                    ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () => _showUpdateVehicleDialog(context, vehicle),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () async {
+                                  try {
+                                    await VehicleRepository.instance.deleteById(vehicle.id);
+                                    // After deleting, we refresh the list
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const VehicleView()),
+                                    );
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error: $e')),
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}*/
+
+  // Show Add Vehicle Dialog
+  void _showAddVehicleDialog(BuildContext context) {
+    final regNumController = TextEditingController();
+    final colorController = TextEditingController();
+    final ownerNameController = TextEditingController();
+    final ownerIdController = TextEditingController();
+    VehicleType selectedType = VehicleType.Bil;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Add New Vehicle'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: regNumController,
+                  decoration: const InputDecoration(labelText: 'Registration Number'),
+                ),
+                DropdownButtonFormField<VehicleType>(
+                  value: selectedType,
+                  decoration: const InputDecoration(labelText: 'Vehicle Type'),
+                  onChanged: (VehicleType? newValue) {
+                    if (newValue != null) {
+                      selectedType = newValue;
+                    }
+                  },
+                  items: VehicleType.values.map((type) {
+                    return DropdownMenuItem<VehicleType>(
+                      value: type,
+                      child: Text(type.name),
+                    );
+                  }).toList(),
+                ),
+                TextField(
+                  controller: colorController,
+                  decoration: const InputDecoration(labelText: 'Color'),
+                ),
+                TextField(
+                  controller: ownerNameController,
+                  decoration: const InputDecoration(labelText: 'Owner Name'),
+                ),
+                TextField(
+                  controller: ownerIdController,
+                  decoration: const InputDecoration(labelText: 'Owner ID'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final regNum = regNumController.text.trim();
+                final color = colorController.text.trim();
+                final ownerName = ownerNameController.text.trim();
+                final personnummer = int.tryParse(ownerIdController.text.trim()) ?? -1;
+
+                if (regNum.isEmpty || color.isEmpty || ownerName.isEmpty || personnummer == -1) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(content: Text('Please fill all fields')),
+                  );
+                  return;
+                }
+
+                try {
+                  final newVehicle = Car(
+                    id: await VehicleRepository.instance.getNextId(),
+                    registreringsNummer: regNum,
+                    typ: selectedType,
+                    owner: Person(namn: ownerName, personNummer: personnummer),
+                    color: color,
+                  );
+
+                  await VehicleRepository.instance.add(newVehicle);
+
+                  Navigator.pop(dialogContext);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const VehicleView()),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(content: Text('Error adding vehicle: $e')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Show Update Vehicle Dialog
+  void _showUpdateVehicleDialog(BuildContext context, Vehicle vehicle) {
+    final regNumController = TextEditingController(text: vehicle.registreringsNummer);
+    final colorController = TextEditingController(text: (vehicle as Car).color);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Update Vehicle'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: regNumController,
+                decoration: const InputDecoration(labelText: 'Registration Number'),
+              ),
+              TextField(
+                controller: colorController,
+                decoration: const InputDecoration(labelText: 'Color'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final regNum = regNumController.text.trim();
+                final color = colorController.text.trim();
+
+                if (regNum.isEmpty || color.isEmpty) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(content: Text('Please fill in all fields')),
+                  );
+                  return;
+                }
+
+                try {
+                  final updatedVehicle = Car(
+                    id: vehicle.id,
+                    registreringsNummer: regNum,
+                    typ: vehicle.typ,
+                    owner: vehicle.owner,
+                    color: color,
+                  );
+
+                  await VehicleRepository.instance.update(vehicle.id, updatedVehicle);
+
+                  Navigator.pop(dialogContext);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const VehicleView()),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    SnackBar(content: Text('Error updating vehicle: $e')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Show View All Vehicles Dialog
+  void _showVehiclesListDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('All Vehicles'),
+          content: FutureBuilder<List<Vehicle>>(
+            future: VehicleRepository.instance.findAll(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Text('No vehicles available.');
+              }
+
+              final vehicles = snapshot.data!;
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: vehicles.length,
+                itemBuilder: (context, index) {
+                  final vehicle = vehicles[index];
+                  return ListTile(
+                    title: Text('Reg Number: ${vehicle.registreringsNummer}'),
+                    subtitle: Text('Type: ${vehicle.typ.name}'),
+                  );
+                },
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
