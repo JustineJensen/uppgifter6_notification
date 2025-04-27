@@ -294,7 +294,7 @@ class ParkingView extends StatelessWidget {
 
               try {
                 final updatedParking = Parking(
-                  id: parking.id, // Use the existing ID for update
+                  id: parking.id, 
                   fordon: Car(
                     id: parking.fordon.id,
                     registreringsNummer: registrationNumber,
@@ -329,6 +329,52 @@ class ParkingView extends StatelessWidget {
     },
   );
 }
+void _startParking(BuildContext context, Parking parking) async {
+  try {
+    final updatedParking = Parking(
+      id: parking.id,
+      fordon: parking.fordon,
+      parkingSpace: parking.parkingSpace,
+      startTime: DateTime.now(),
+      endTime: null, 
+    );
+
+    await ParkingRepository.instance.update(parking.id, updatedParking);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Parking started')),
+    );
+
+    (context as Element).markNeedsBuild();
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error starting parking: $e')),
+    );
+  }
+}
+
+void _endParking(BuildContext context, Parking parking) async {
+  try {
+    final updatedParking = Parking(
+      id: parking.id,
+      fordon: parking.fordon,
+      parkingSpace: parking.parkingSpace,
+      startTime: parking.startTime,
+      endTime: DateTime.now(),
+    );
+
+    await ParkingRepository.instance.update(parking.id, updatedParking);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Parking ended')),
+    );
+
+    (context as Element).markNeedsBuild();
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error ending parking: $e')),
+    );
+  }
+}
+
 
 }
 
