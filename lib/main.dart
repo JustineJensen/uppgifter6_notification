@@ -45,7 +45,6 @@ class _MyAppState extends State<MyApp> {
       title: 'Parking App',
       themeMode: _themeMode,
       theme: ThemeData.light().copyWith(
-        // Color Scheme
         colorScheme: ColorScheme.light(
           primary: Colors.blue.shade800,
           secondary: Colors.blue.shade600,
@@ -53,8 +52,7 @@ class _MyAppState extends State<MyApp> {
           background: Colors.grey.shade50,
           error: Colors.red.shade400,
         ),
-        
-        // App Bar Theme
+
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.blue.shade800,
           foregroundColor: Colors.white,
@@ -67,7 +65,6 @@ class _MyAppState extends State<MyApp> {
           toolbarHeight: 64,
         ),
         
-        // Card Theme
         cardTheme: CardTheme(
           elevation: 2,
           margin: const EdgeInsets.all(12),
@@ -104,7 +101,6 @@ class _MyAppState extends State<MyApp> {
           ),
         ),
         
-        // Input Decoration Theme
         inputDecorationTheme: InputDecorationTheme(
           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           filled: true,
@@ -159,8 +155,7 @@ class _MyAppState extends State<MyApp> {
             color: Colors.black87,
           ),
         ),
-        
-        // ListTile Theme
+
         listTileTheme: ListTileThemeData(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           minVerticalPadding: 8,
@@ -169,8 +164,7 @@ class _MyAppState extends State<MyApp> {
             borderRadius: BorderRadius.circular(8),
           ),
         ),
-        
-        // Add spacing extension
+
         extensions: const <ThemeExtension<dynamic>>[
           FormSpacing(
             vertical: 16.0,
@@ -180,7 +174,6 @@ class _MyAppState extends State<MyApp> {
       ),
       
       darkTheme: ThemeData.dark().copyWith(
-        // (Add similar dark theme customizations if needed)
       ),
       
       home: const AuthGate(),  
