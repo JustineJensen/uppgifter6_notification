@@ -25,10 +25,10 @@ class ParkingSpaceView extends StatelessWidget {
           _showAddParkingSpaceDialog(context);
         },
       ),
-      const SizedBox(height: 10), // This should be outside the button
+      const SizedBox(height: 10),
       ElevatedButton(
         onPressed: _viewAllParkingSpaces,
-        child: const Text('View All Persons'),
+        child: const Text('View All Parking Spaces'),
       ),
       const SizedBox(height: 20),
       Expanded(

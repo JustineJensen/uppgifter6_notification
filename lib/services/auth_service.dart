@@ -11,10 +11,17 @@ class AuthService {
     required BuildContext context,
   }) async {
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      // 1. Create user with email and password
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // 2. Update the user's display name
+      await userCredential.user?.updateDisplayName(name);
+      await userCredential.user?.reload(); // Refresh user data
+
       await Future.delayed(const Duration(seconds: 1));
 
       Navigator.pushReplacement(
@@ -32,15 +39,14 @@ class AuthService {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.redAccent,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     } catch (e) {
-     throw Exception("");
+      throw Exception("An error occurred");
     }
   }
 
@@ -59,7 +65,7 @@ class AuthService {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const Home(title: 'Parking App',),
+          builder: (context) => const Home(title: 'Parking App'),
         ),
       );
     } on FirebaseAuthException catch (e) {
@@ -70,16 +76,15 @@ class AuthService {
         message = 'Wrong password provided for that user.';
       }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.redAccent,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.redAccent,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     } catch (e) {
-      throw Exception("");
+      throw Exception("An error occurred");
     }
   }
 

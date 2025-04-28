@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// In your profile screen
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
@@ -28,7 +29,14 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   Text('Email: ${user.email ?? 'No Email Provided'}', 
                     style: const TextStyle(fontSize: 16)),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await _updateUserName(context);
+                      (context as Element).markNeedsBuild();
+                    },
+                    child: const Text('Update Name'),
+                  ),
                 ],
               ),
             );
@@ -42,5 +50,37 @@ class ProfileScreen extends StatelessWidget {
 
   Future<User?> _getCurrentUser() async {
     return FirebaseAuth.instance.currentUser; 
+  }
+
+  Future<void> _updateUserName(BuildContext context) async {
+    final nameController = TextEditingController();
+    final user = FirebaseAuth.instance.currentUser;
+    
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Name'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(hintText: 'Enter your name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                await user?.updateDisplayName(nameController.text);
+                await user?.reload();
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 }

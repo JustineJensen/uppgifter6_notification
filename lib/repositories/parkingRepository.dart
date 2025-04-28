@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:uppgift1/models/parking.dart';
-import 'package:uppgift1/repositories/fileRepository.dart';
+
 import 'package:path_provider/path_provider.dart';
+import 'package:uppgift3_new_app/repositories/fileRepository.dart';
 
 class ParkingRepository extends FileRepository<Parking, int> {
-  final String baseUrl = 'http://10.0.2.2:8080/parking';
+  final String baseUrl = 'http://10.0.2.2:8082/parking';
   int _nextId=1;
   ParkingRepository._internal() : super('parking_data.json');
   static final ParkingRepository _instance = ParkingRepository._internal();

@@ -46,21 +46,46 @@ class ParkingView extends StatelessWidget {
                       final parking = parkings[index];
                       return Card(
                         child: ListTile(
-                          title: Text(parking.toString()),
-                          subtitle: Text('Started at: ${parking.startTime}'),
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Vehicle: ${parking.fordon.registreringsNummer}'),
+                              Text('Parking Space: ${parking.parkingSpace.id}'),
+                              Text('Location: ${parking.parkingSpace.adress}'),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Start Time: ${_formatDateTime(parking.startTime)}'),
+                              if (parking.endTime != null)
+                                Text('End Time: ${_formatDateTime(parking.endTime!)}'),
+                              Text('Status: ${parking.endTime == null ? 'Active' : 'Completed'}'),
+                            ],
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              if (parking.endTime == null)
+                                IconButton(
+                                  icon: const Icon(Icons.stop, color: Colors.red),
+                                  onPressed: () => _endParking(context, parking),
+                                )
+                              else
+                                IconButton(
+                                  icon: const Icon(Icons.play_arrow, color: Colors.green),
+                                  onPressed: () => _startParking(context, parking),
+                                ),
                               IconButton(
                                 icon: const Icon(Icons.attach_money),
                                 onPressed: () => _calculateCost(context, parking),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.update),
+                                icon: const Icon(Icons.edit),
                                 onPressed: () => _showUpdateParkingDialog(context, parking),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete),
+                                icon: const Icon(Icons.delete, color: Colors.red),
                                 onPressed: () async {
                                   await _deleteParking(context, parking);
                                   (context as Element).markNeedsBuild();
@@ -79,6 +104,10 @@ class ParkingView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   Widget _buildOption(BuildContext context, String label, IconData icon, VoidCallback onPressed) {
@@ -201,24 +230,27 @@ class ParkingView extends StatelessWidget {
   }
 
   void _calculateCost(BuildContext context, Parking parking) {
-    final endTime = DateTime.now();
+    final endTime = parking.endTime ?? DateTime.now();
     final duration = endTime.difference(parking.startTime);
     final hours = duration.inMinutes / 60;
-    final cost = hours * 10;
+    final cost = hours * parking.parkingSpace.pricePerHour;
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Parking Ended'),
+        title: Text(parking.endTime == null ? 'Current Parking Cost' : 'Parking Ended'),
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Start Time: ${parking.startTime.toString()}'),
+            Text('Vehicle: ${parking.fordon.registreringsNummer}'),
             const SizedBox(height: 8),
-            Text('End Time: $endTime'),
+            Text('Start Time: ${_formatDateTime(parking.startTime)}'),
+            const SizedBox(height: 8),
+            Text('End Time: ${parking.endTime != null ? _formatDateTime(parking.endTime!) : "Still parking"}'),
             const SizedBox(height: 8),
             Text('Duration: ${hours.toStringAsFixed(2)} hours'),
+            Text('Price per hour: ${parking.parkingSpace.pricePerHour.toStringAsFixed(2)} kr'),
             Text('Total Cost: ${cost.toStringAsFixed(2)} kr'),
           ],
         ),
@@ -233,149 +265,148 @@ class ParkingView extends StatelessWidget {
   }
 
   void _showUpdateParkingDialog(BuildContext context, Parking parking) {
-  final registrationController = TextEditingController(text: parking.fordon.registreringsNummer);
-  final ownerController = TextEditingController(text: parking.fordon.owner.namn);
-  final colorController = TextEditingController(text: parking.fordon.color);
-  final parkingSpaceIdController = TextEditingController(text: parking.parkingSpace.id.toString());
-  final parkingLocationController = TextEditingController(text: parking.parkingSpace.adress);
+    final registrationController = TextEditingController(text: parking.fordon.registreringsNummer);
+    final ownerController = TextEditingController(text: parking.fordon.owner.namn);
+    final colorController = TextEditingController(text: parking.fordon.color);
+    final parkingSpaceIdController = TextEditingController(text: parking.parkingSpace.id.toString());
+    final parkingLocationController = TextEditingController(text: parking.parkingSpace.adress);
 
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Update Parking'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: registrationController,
-                decoration: const InputDecoration(labelText: 'Registration Number'),
-              ),
-              TextField(
-                controller: ownerController,
-                decoration: const InputDecoration(labelText: 'Owner'),
-              ),
-              TextField(
-                controller: colorController,
-                decoration: const InputDecoration(labelText: 'Color'),
-              ),
-              TextField(
-                controller: parkingSpaceIdController,
-                decoration: const InputDecoration(labelText: 'Parking Space ID'),
-                keyboardType: TextInputType.number,
-              ),
-              TextField(
-                controller: parkingLocationController,
-                decoration: const InputDecoration(labelText: 'Parking Location'),
-              ),
-            ],
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Update Parking'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: registrationController,
+                  decoration: const InputDecoration(labelText: 'Registration Number'),
+                ),
+                TextField(
+                  controller: ownerController,
+                  decoration: const InputDecoration(labelText: 'Owner'),
+                ),
+                TextField(
+                  controller: colorController,
+                  decoration: const InputDecoration(labelText: 'Color'),
+                ),
+                TextField(
+                  controller: parkingSpaceIdController,
+                  decoration: const InputDecoration(labelText: 'Parking Space ID'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: parkingLocationController,
+                  decoration: const InputDecoration(labelText: 'Parking Location'),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final registrationNumber = registrationController.text.trim();
-              final owner = ownerController.text.trim();
-              final color = colorController.text.trim();
-              final parkingSpaceId = int.tryParse(parkingSpaceIdController.text.trim());
-              final parkingLocation = parkingLocationController.text.trim();
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final registrationNumber = registrationController.text.trim();
+                final owner = ownerController.text.trim();
+                final color = colorController.text.trim();
+                final parkingSpaceId = int.tryParse(parkingSpaceIdController.text.trim());
+                final parkingLocation = parkingLocationController.text.trim();
 
-              if (registrationNumber.isEmpty || owner.isEmpty || color.isEmpty || parkingSpaceId == null || parkingLocation.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please fill in all fields')),
-                );
-                return;
-              }
+                if (registrationNumber.isEmpty || owner.isEmpty || color.isEmpty || parkingSpaceId == null || parkingLocation.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please fill in all fields')),
+                  );
+                  return;
+                }
 
-              try {
-                final updatedParking = Parking(
-                  id: parking.id, 
-                  fordon: Car(
-                    id: parking.fordon.id,
-                    registreringsNummer: registrationNumber,
-                    typ: parking.fordon.typ,
-                    owner: Person(namn: owner, personNummer: parking.fordon.owner.personNummer),
-                    color: color,
-                  ),
-                  parkingSpace: ParkingSpace(
-                    id: parkingSpaceId,
-                    adress: parkingLocation,
-                    pricePerHour: parking.parkingSpace.pricePerHour,
-                  ),
-                  startTime: parking.startTime,
-                  endTime: parking.endTime,
-                );
-                await ParkingRepository.instance.update(parking.id, updatedParking);
+                try {
+                  final updatedParking = Parking(
+                    id: parking.id, 
+                    fordon: Car(
+                      id: parking.fordon.id,
+                      registreringsNummer: registrationNumber,
+                      typ: parking.fordon.typ,
+                      owner: Person(namn: owner, personNummer: parking.fordon.owner.personNummer),
+                      color: color,
+                    ),
+                    parkingSpace: ParkingSpace(
+                      id: parkingSpaceId,
+                      adress: parkingLocation,
+                      pricePerHour: parking.parkingSpace.pricePerHour,
+                    ),
+                    startTime: parking.startTime,
+                    endTime: parking.endTime,
+                  );
+                  await ParkingRepository.instance.update(parking.id, updatedParking);
 
-                print('Parking updated: $updatedParking');
+                  print('Parking updated: $updatedParking');
 
-                Navigator.pop(context);
-                (context as Element).markNeedsBuild();
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error updating parking: $e')),
-                );
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+                  Navigator.pop(context);
+                  (context as Element).markNeedsBuild();
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error updating parking: $e')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _startParking(BuildContext context, Parking parking) async {
+    try {
+      final updatedParking = Parking(
+        id: parking.id,
+        fordon: parking.fordon,
+        parkingSpace: parking.parkingSpace,
+        startTime: DateTime.now(),
+        endTime: null,
       );
-    },
-  );
-}
-void _startParking(BuildContext context, Parking parking) async {
-  try {
-    final updatedParking = Parking(
-      id: parking.id,
-      fordon: parking.fordon,
-      parkingSpace: parking.parkingSpace,
-      startTime: DateTime.now(),
-      endTime: null, 
-    );
 
-    await ParkingRepository.instance.update(parking.id, updatedParking);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Parking started')),
-    );
+      await ParkingRepository.instance.update(parking.id, updatedParking);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Parking started')),
+      );
 
-    (context as Element).markNeedsBuild();
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error starting parking: $e')),
-    );
+      (context as Element).markNeedsBuild();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error starting parking: $e')),
+      );
+    }
   }
-}
 
-void _endParking(BuildContext context, Parking parking) async {
-  try {
-    final updatedParking = Parking(
-      id: parking.id,
-      fordon: parking.fordon,
-      parkingSpace: parking.parkingSpace,
-      startTime: parking.startTime,
-      endTime: DateTime.now(),
-    );
+  void _endParking(BuildContext context, Parking parking) async {
+    try {
+      final updatedParking = Parking(
+        id: parking.id,
+        fordon: parking.fordon,
+        parkingSpace: parking.parkingSpace,
+        startTime: parking.startTime,
+        endTime: DateTime.now(),
+      );
 
-    await ParkingRepository.instance.update(parking.id, updatedParking);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Parking ended')),
-    );
+      await ParkingRepository.instance.update(parking.id, updatedParking);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Parking ended')),
+      );
 
-    (context as Element).markNeedsBuild();
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error ending parking: $e')),
-    );
+      (context as Element).markNeedsBuild();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error ending parking: $e')),
+      );
+    }
   }
-}
-
-
 }
 
 extension on Vehicle {

@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:uppgift1/models/person.dart';
-import 'package:uppgift1/repositories/fileRepository.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uppgift3_new_app/repositories/fileRepository.dart';
 
 class PersonRepository extends FileRepository<Person, int> {
-  final String baseUrl = 'http://10.0.2.2:8080/person';
+  final String baseUrl = 'http://10.0.2.2:8082/person';
 
   // Singleton pattern for PersonRepository
   PersonRepository._internal() : super('person_data.json'); 
