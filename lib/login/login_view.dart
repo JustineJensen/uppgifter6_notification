@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uppgift3_new_app/blocs/auth_bloc/auth_bloc.dart';
+import 'package:uppgift3_new_app/views/home.dart';
 import 'package:uppgift3_new_app/views/signup_view.dart';
-import 'package:uppgift3_new_app/services/auth_service.dart';
+import 'package:uppgift3_new_app/blocs/auth_bloc/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginView extends StatelessWidget {
@@ -98,17 +101,41 @@ class LoginView extends StatelessWidget {
   }
 
   Widget _signin(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () async {
-        await AuthService().signin(
-          email: _emailController.text,
-          password: _passwordController.text,
+  return BlocListener<AuthBloc, AuthState>(
+    listener: (context, state) {
+      if (state is AuthInProgress) {
+        showDialog(
           context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
         );
+      } else {
+        Navigator.of(context, rootNavigator: true).pop(); 
+      }
+
+      if (state is AuthSuccess) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Home(title: 'Parking App')),
+        );
+      }
+
+      if (state is AuthFailure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(state.error), backgroundColor: Colors.redAccent),
+        );
+      }
+    },
+    child: ElevatedButton(
+      onPressed: () {
+        final email = _emailController.text.trim();
+        final password = _passwordController.text.trim();
+        context.read<AuthBloc>().add(AuthLogin(email: email, password: password));
       },
       child: const Text('Sign in'),
-    );
-  }
+    ),
+  );
+}
 
   Widget _signupButton(BuildContext context) {
     return TextButton(

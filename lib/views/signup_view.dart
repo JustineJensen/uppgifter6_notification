@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:uppgift3_new_app/main.dart';
-import 'package:uppgift3_new_app/services/auth_service.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uppgift3_new_app/blocs/auth_bloc/auth_bloc.dart';
+import 'package:uppgift3_new_app/views/home.dart';
+
 class SignupScreen extends StatelessWidget {
   SignupScreen({super.key});
 
@@ -13,48 +15,64 @@ class SignupScreen extends StatelessWidget {
     return Scaffold(
       bottomNavigationBar: _signin(context),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Sign up',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+        child: BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthSuccess) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const Home(title: 'Parking App')),
+              );
+            } else if (state is AuthFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.error), backgroundColor: Colors.red),
+              );
+            }
+          },
+          builder: (context, state) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Sign up', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  _name(),
+                  const SizedBox(height: 16),
+                  _emailAddress(),
+                  const SizedBox(height: 16),
+                  _password(),
+                  const SizedBox(height: 16),
+                  _signup(context, state),
+                ],
               ),
-               const SizedBox(height: 16),
-              _name(),
-              const SizedBox(height: 16),
-              _emailAddress(),
-              const SizedBox(height: 16),
-              _password(),
-              const SizedBox(height: 16),
-              _signup(context),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
+  Widget _name() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Name'),
+        TextField(
+          controller: _nameController,
+          decoration: const InputDecoration(hintText: 'Enter your full name'),
+        ),
+      ],
+    );
+  }
+
   Widget _emailAddress() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Email address'),
         TextField(
           controller: _emailController,
-          decoration: const InputDecoration(
-            hintText: 'Enter your email address',
-          ),
+          decoration: const InputDecoration(hintText: 'Enter your email address'),
         ),
       ],
     );
@@ -62,46 +80,32 @@ class SignupScreen extends StatelessWidget {
 
   Widget _password() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('Password'),
         TextField(
           controller: _passwordController,
           obscureText: true,
-          decoration: const InputDecoration(
-            hintText: 'Enter your password',
-          ),
+          decoration: const InputDecoration(hintText: 'Enter your password'),
         ),
       ],
     );
   }
-  Widget _name() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text('Name'),
-      TextField(
-        controller: _nameController,
-        decoration: const InputDecoration(
-          hintText: 'Enter your full name',
-        ),
-      ),
-    ],
-  );
-}
 
-  Widget _signup(BuildContext context) {
+  Widget _signup(BuildContext context, AuthState state) {
     return ElevatedButton(
-      onPressed: () async {
-        await AuthService().signup(
-          email: _emailController.text,
-          password: _passwordController.text,
-          context: context,
-          name: _nameController.text,
-        );
+      onPressed: () {
+        context.read<AuthBloc>().add(
+              AuthRegister(
+                username: _nameController.text.trim(),
+                email: _emailController.text.trim(),
+                password: _passwordController.text,
+              ),
+            );
       },
-      child: const Text('Sign up'),
+      child: state is AuthInProgress
+          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+          : const Text('Sign up'),
     );
   }
 
@@ -112,12 +116,7 @@ class SignupScreen extends StatelessWidget {
         const Text('Already have an account?'),
         TextButton(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MyApp(),
-              ),
-            );
+            Navigator.pop(context);
           },
           child: const Text('Sign in'),
         ),

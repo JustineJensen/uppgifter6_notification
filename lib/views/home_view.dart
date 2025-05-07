@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:uppgift3_new_app/services/auth_service.dart';
+import 'package:uppgift3_new_app/blocs/auth_bloc/auth_service.dart';
 
 class HomeScreenContent extends StatelessWidget {
   const HomeScreenContent({super.key});

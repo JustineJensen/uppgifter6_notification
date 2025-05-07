@@ -98,7 +98,6 @@ Future<Person> update(int id, Person newPerson) async {
   }
 }
 
-
   @override
   Person fromJson(Map<String, dynamic> json) {
     return Person.fromJson(json);

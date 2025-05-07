@@ -20,7 +20,7 @@ class AuthService {
 
       // 2. Update the user's display name
       await userCredential.user?.updateDisplayName(name);
-      await userCredential.user?.reload(); // Refresh user data
+      await userCredential.user?.reload(); 
 
       await Future.delayed(const Duration(seconds: 1));
 
