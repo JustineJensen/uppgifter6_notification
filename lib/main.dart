@@ -4,8 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:uppgift3_new_app/blocs/auth_bloc/auth_bloc.dart';
+import 'package:uppgift3_new_app/blocs/parking_bloc/parking_bloc.dart';
+import 'package:uppgift3_new_app/blocs/parking_bloc/parking_event.dart';
+import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_bloc.dart';
+import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_event.dart';
+import 'package:uppgift3_new_app/blocs/person_bloc/person_bloc.dart';
+import 'package:uppgift3_new_app/blocs/person_bloc/person_event.dart';
+import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_bloc.dart';
+import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_event.dart';
 
 import 'package:uppgift3_new_app/firebase_options.dart';
+import 'package:uppgift3_new_app/repositories/vehicleRepository.dart';
 import 'package:uppgift3_new_app/views/home.dart';
 import 'package:uppgift3_new_app/views/landingpage.dart';
 import 'package:uppgift3_new_app/views/person_view.dart';
@@ -41,66 +50,82 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
- @override
-Widget build(BuildContext context) {
-  return BlocProvider(
-    create: (_) => AuthBloc()..add(AuthSubscribe()),
-    child: MaterialApp(
-      title: 'Parking App',
-      themeMode: _themeMode,
-      theme: ThemeData.light().copyWith(
-        colorScheme: ColorScheme.light(
-          primary: Colors.blue.shade800,
-          secondary: Colors.blue.shade600,
-          error: Colors.red.shade400,
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (_) => AuthBloc()..add(AuthSubscribe()),
         ),
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.blue.shade800,
-          foregroundColor: Colors.white,
-          elevation: 4,
-          centerTitle: true,
-          titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          toolbarHeight: 64,
+        BlocProvider<PersonBloc>(
+          create: (_) => PersonBloc()..add(LoadPersons()),
         ),
-        cardTheme: CardTheme(
-          elevation: 2,
-          margin: const EdgeInsets.all(12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        BlocProvider<VehicleBloc>(
+          create: (_) => VehicleBloc(VehicleRepository.instance)..add(LoadVehicles()),
         ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
+        BlocProvider<ParkingBloc>(
+          create: (_) => ParkingBloc()..add(LoadParkings()),
+        ),
+        BlocProvider<ParkingSpaceBloc>(
+          create: (_) => ParkingSpaceBloc()..add(LoadParkingSpaces()),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Parking App',
+        themeMode: _themeMode,
+        theme: ThemeData.light().copyWith(
+          colorScheme: ColorScheme.light(
+            primary: Colors.blue.shade800,
+            secondary: Colors.blue.shade600,
+            error: Colors.red.shade400,
+          ),
+          appBarTheme: AppBarTheme(
             backgroundColor: Colors.blue.shade800,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            elevation: 4,
+            centerTitle: true,
+            titleTextStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            toolbarHeight: 64,
+          ),
+          cardTheme: CardTheme(
+            elevation: 2,
+            margin: const EdgeInsets.all(12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.shade800,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.blue.shade800,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            ),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            filled: true,
+            fillColor: Colors.grey.shade100,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.blue.shade800,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-          filled: true,
-          fillColor: Colors.grey.shade100,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        ),
+        darkTheme: ThemeData.dark().copyWith(),
+        home: const AuthGate(),
+        routes: {
+          '/person': (context) => const PersonView(),
+          '/vehicles': (context) => const VehicleView(),
+          '/parking': (context) => const ParkingView(),
+          '/parkingplaces': (context) => const ParkingSpaceView(),
+        },
       ),
-      darkTheme: ThemeData.dark().copyWith(),
-      home: const AuthGate(),
-      routes: {
-        '/person': (context) => const PersonView(),
-        '/vehicles': (context) => const VehicleView(),
-        '/parking': (context) => const ParkingView(),
-        '/parkingplaces': (context) => const ParkingSpaceView(),
-      },
-    ),
-  );
-}
+    );
+  }
 }
 class FormSpacing extends ThemeExtension<FormSpacing> {
   const FormSpacing({required this.vertical, required this.horizontal});
