@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uppgift1/models/person.dart';
-import 'package:uppgift3_new_app/repositories/personRepository.dart';
+import 'package:uppgift3_new_app/blocs/person_bloc/person_bloc.dart';
+import 'package:uppgift3_new_app/blocs/person_bloc/person_event.dart';
+import 'package:uppgift3_new_app/blocs/person_bloc/person_state.dart';
 
 class PersonView extends StatefulWidget {
   const PersonView({super.key});
@@ -10,8 +13,6 @@ class PersonView extends StatefulWidget {
 }
 
 class _PersonViewState extends State<PersonView> {
-  Future<List<Person>>? _futurePersons;
-
   void _showPersonDialog({Person? person}) {
     final nameController = TextEditingController(text: person?.namn ?? '');
     final numberController = TextEditingController(
@@ -42,7 +43,7 @@ class _PersonViewState extends State<PersonView> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () async {
+            onPressed: () {
               final name = nameController.text.trim();
               final pnrStr = numberController.text.trim();
 
@@ -56,30 +57,21 @@ class _PersonViewState extends State<PersonView> {
                 return;
               }
 
-              try {
-                if (person == null) {
-                  await PersonRepository.instance.add(
-                    Person(namn: name, personNummer: pnr),
-                  );
-                } else {
-                  final newPerson = Person(
-                    id: person.id,
-                    namn: name,
-                    personNummer: pnr,
-                  );
-                  await PersonRepository.instance.update(person.id, newPerson);
-                }
-              
-                Navigator.pop(context);
-              
-                setState(() {
-                  _futurePersons = PersonRepository.instance.findAll();
-                });
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: ${e.toString()}')),
+              if (person == null) {
+                context.read<PersonBloc>().add(
+                  AddPerson(Person(namn: name, personNummer: pnr)),
                 );
+              } else {
+                context.read<PersonBloc>().add(
+                UpdatePerson(
+                  person.id!,
+                  Person(id: person.id, namn: name, personNummer: pnr), 
+                ),
+              );
+
               }
+
+              Navigator.pop(context); 
             },
             child: Text(person == null ? 'Add' : 'Update'),
           ),
@@ -89,76 +81,96 @@ class _PersonViewState extends State<PersonView> {
   }
 
   void _viewAllPersons() {
-    setState(() {
-      _futurePersons = PersonRepository.instance.findAll();
-    });
+    context.read<PersonBloc>().add(LoadPersons());
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _viewAllPersons();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Manage Person")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ElevatedButton(
-              onPressed: () => _showPersonDialog(),
-              child: const Text('Add New Person'),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _viewAllPersons,
-              child: const Text('View All Persons'),
-            ),
-            const SizedBox(height: 20),
-            if (_futurePersons != null)
+    return BlocListener<PersonBloc, PersonState>(
+      listener: (context, state) {
+        if (state is PersonError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+        if (state is PersonLoaded) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Operation successful")),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text("Manage Person")),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ElevatedButton(
+                onPressed: () => _showPersonDialog(),
+                child: const Text('Add New Person'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _viewAllPersons,
+                child: const Text('View All Persons'),
+              ),
+              const SizedBox(height: 20),
               Expanded(
-                child: FutureBuilder<List<Person>>(
-                  future: _futurePersons,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                child: BlocBuilder<PersonBloc, PersonState>(
+                  builder: (context, state) {
+                    if (state is PersonLoading) {
                       return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No persons found.'));
-                    }
+                    } else if (state is PersonError) {
+                      return Center(child: Text('Error: ${state.message}'));
+                    } else if (state is PersonLoaded) {
+                      final persons = state.persons;
+                      if (persons.isEmpty) {
+                        return const Center(child: Text('No persons found.'));
+                      }
+                      return ListView.builder(
+                        itemCount: persons.length,
+                        itemBuilder: (context, index) {
+                          final person = persons[index];
+                          return ListTile(
+                            title: Text(person.namn),
+                            subtitle: Text('ID: ${person.id} | Personnummer: ${person.personNummer}'),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: () {
+                                    _showPersonDialog(person: person);
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    context.read<PersonBloc>().add(
+                                    DeletePerson(person.id!),
+                                  );
 
-                    final persons = snapshot.data!;
-                    return ListView.builder(
-                      itemCount: persons.length,
-                      itemBuilder: (context, index) {
-                        final person = persons[index];
-                        return ListTile(
-                          title: Text(person.namn),
-                          subtitle: Text('ID: ${person.id} | Personnummer: ${person.personNummer}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () {
-                                  _showPersonDialog(person: person);
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () async {
-                                  await PersonRepository.instance.deleteById(person.id!);
-                                  _viewAllPersons();
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
+                    return const SizedBox();
                   },
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

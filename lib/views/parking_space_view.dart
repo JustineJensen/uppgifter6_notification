@@ -1,106 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uppgift1/models/parkingSpace.dart';
-import 'package:uppgift3_new_app/repositories/parkingSpaceRepository.dart';
-
+import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_bloc.dart';
+import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_event.dart';
+import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_state_bloc.dart';
 
 class ParkingSpaceView extends StatelessWidget {
   const ParkingSpaceView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(' Manage Parking Spaces'),
-        leading: const BackButton(),
-      ),
-      body: Padding(
-  padding: const EdgeInsets.all(16.0),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      ElevatedButton.icon(
-        icon: const Icon(Icons.add),
-        label: const Text('Add New Parking Space'),
-        onPressed: () {
-          _showAddParkingSpaceDialog(context);
-        },
-      ),
-      const SizedBox(height: 10),
-      ElevatedButton(
-        onPressed: _viewAllParkingSpaces,
-        child: const Text('View All Parking Spaces'),
-      ),
-      const SizedBox(height: 20),
-      Expanded(
-        child: FutureBuilder<List<ParkingSpace>>(
-          future: ParkingSpaceRepository.instance.findAll(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No parking spaces available.'));
-            }
+    return BlocListener<ParkingSpaceBloc, ParkingSpaceState>(
+      listener: (context, state) {
+        if (state is ParkingSpaceError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Manage Parking Spaces'),
+          leading: const BackButton(),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Add New Parking Space'),
+                onPressed: () => _showAddParkingSpaceDialog(context),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  context.read<ParkingSpaceBloc>().add(LoadParkingSpaces());
+                },
+                child: const Text('View All Parking Spaces'),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: BlocBuilder<ParkingSpaceBloc, ParkingSpaceState>(
+                  builder: (context, state) {
+                    if (state is ParkingSpaceLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is ParkingSpaceLoaded) {
+                      if (state.parkingSpaces.isEmpty) {
+                        return const Center(child: Text('No parking spaces available.'));
+                      }
 
-            final parkingSpaces = snapshot.data!;
-
-            return ListView.builder(
-              itemCount: parkingSpaces.length,
-              itemBuilder: (context, index) {
-                final space = parkingSpaces[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    title: Text('ID: ${space.id}'),
-                    subtitle: Text('Address: ${space.adress}\nPrice per hour: ${space.pricePerHour} kr'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _showUpdateParkingSpaceDialog(context, space),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () async {
-                            try {
-                              await ParkingSpaceRepository.instance.deleteById(space.id);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Parking space deleted')),
-                              );
-                              (context as Element).markNeedsBuild();
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
-                              );
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+                      return ListView.builder(
+                        itemCount: state.parkingSpaces.length,
+                        itemBuilder: (context, index) {
+                          final space = state.parkingSpaces[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: ListTile(
+                              title: Text('ID: ${space.id}'),
+                              subtitle: Text('Address: ${space.adress}\nPrice per hour: ${space.pricePerHour} kr'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () => _showUpdateParkingSpaceDialog(context, space),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () {
+                                      context.read<ParkingSpaceBloc>().add(DeleteParkingSpace(space.id));
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    } else if (state is ParkingSpaceError) {
+                      return Center(child: Text(state.message));
+                    }
+                    return const SizedBox(); 
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ],
-  ),
-),
-
     );
   }
 
-  // Show Add Parking Space Dialog
   void _showAddParkingSpaceDialog(BuildContext context) {
     final addressController = TextEditingController();
     final priceController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (_) {
         return AlertDialog(
           title: const Text('Add New Parking Space'),
           content: Column(
@@ -123,7 +122,7 @@ class ParkingSpaceView extends StatelessWidget {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () async {
+              onPressed: () {
                 final address = addressController.text.trim();
                 final price = double.tryParse(priceController.text.trim());
 
@@ -134,25 +133,14 @@ class ParkingSpaceView extends StatelessWidget {
                   return;
                 }
 
-                try {
-                  final newParkingSpace = ParkingSpace(
-                    id: await ParkingSpaceRepository.instance.getNextId(),
-                    adress: address,
-                    pricePerHour: price,
-                  );
+                final newSpace = ParkingSpace(
+                  id: DateTime.now().millisecondsSinceEpoch,
+                  adress: address,
+                  pricePerHour: price,
+                );
 
-                  await ParkingSpaceRepository.instance.add(newParkingSpace);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Parking space added successfully')),
-                  );
-
-                  Navigator.pop(context);
-                  (context as Element).markNeedsBuild();
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error adding parking space: $e')),
-                  );
-                }
+                context.read<ParkingSpaceBloc>().add(AddParkingSpace(newSpace));
+                Navigator.pop(context);
               },
               child: const Text('Save'),
             ),
@@ -162,14 +150,13 @@ class ParkingSpaceView extends StatelessWidget {
     );
   }
 
-  // Show Update Parking Space Dialog
   void _showUpdateParkingSpaceDialog(BuildContext context, ParkingSpace space) {
     final addressController = TextEditingController(text: space.adress);
     final priceController = TextEditingController(text: space.pricePerHour.toString());
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (_) {
         return AlertDialog(
           title: const Text('Update Parking Space'),
           content: Column(
@@ -192,7 +179,7 @@ class ParkingSpaceView extends StatelessWidget {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () async {
+              onPressed: () {
                 final address = addressController.text.trim();
                 final price = double.tryParse(priceController.text.trim());
 
@@ -203,25 +190,16 @@ class ParkingSpaceView extends StatelessWidget {
                   return;
                 }
 
-                try {
-                  final updatedParkingSpace = ParkingSpace(
-                    id: space.id,
-                    adress: address,
-                    pricePerHour: price,
-                  );
+                final updatedSpace = ParkingSpace(
+                  id: space.id,
+                  adress: address,
+                  pricePerHour: price,
+                );
 
-                  await ParkingSpaceRepository.instance.update(space.id, updatedParkingSpace);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Parking space updated successfully')),
-                  );
-
-                  Navigator.pop(context);
-                  (context as Element).markNeedsBuild();
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error updating parking space: $e')),
-                  );
-                }
+                context.read<ParkingSpaceBloc>().add(
+                      UpdateParkingSpace(space.id, updatedSpace),
+                    );
+                Navigator.pop(context);
               },
               child: const Text('Save'),
             ),
@@ -229,8 +207,5 @@ class ParkingSpaceView extends StatelessWidget {
         );
       },
     );
-  }
-
-  void _viewAllParkingSpaces() {
   }
 }
