@@ -23,7 +23,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
       final spaces = await _repository.findAll();
       emit(ParkingSpaceLoaded(spaces));
     } catch (e) {
-      emit(ParkingSpaceError('Failed to load parking spaces: $e'));
+      emit(ParkingSpaceError('Failed to load parking spaces: ${e.toString()}'));
     }
   }
 
@@ -35,7 +35,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
       await _repository.add(event.parkingSpace);
       add(LoadParkingSpaces());
     } catch (e) {
-      emit(ParkingSpaceError('Failed to add parking space: $e'));
+      emit(ParkingSpaceError('Failed to add parking space: ${e.toString()}'));
     }
   }
 
@@ -47,7 +47,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
       await _repository.update(event.id, event.updatedSpace);
       add(LoadParkingSpaces());
     } catch (e) {
-      emit(ParkingSpaceError('Failed to update parking space: $e'));
+      emit(ParkingSpaceError('Failed to update parking space: ${e.toString()}'));
     }
   }
 
@@ -59,7 +59,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
       await _repository.deleteById(event.id);
       add(LoadParkingSpaces());
     } catch (e) {
-      emit(ParkingSpaceError('Failed to delete parking space: $e'));
+      emit(ParkingSpaceError('Failed to delete parking space: ${e.toString()}'));
     }
   }
 }

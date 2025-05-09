@@ -14,6 +14,7 @@ import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_bloc.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_event.dart';
 
 import 'package:uppgift3_new_app/firebase_options.dart';
+import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 import 'package:uppgift3_new_app/repositories/vehicleRepository.dart';
 import 'package:uppgift3_new_app/views/home.dart';
 import 'package:uppgift3_new_app/views/landingpage.dart';
@@ -64,7 +65,7 @@ class _MyAppState extends State<MyApp> {
           create: (_) => VehicleBloc(VehicleRepository.instance)..add(LoadVehicles()),
         ),
         BlocProvider<ParkingBloc>(
-          create: (_) => ParkingBloc()..add(LoadParkings()),
+          create: (_) => ParkingBloc(ParkingRepository.instance)..add(LoadParkings()),
         ),
         BlocProvider<ParkingSpaceBloc>(
           create: (_) => ParkingSpaceBloc()..add(LoadParkingSpaces()),

@@ -13,8 +13,9 @@ class PersonRepository extends FileRepository<Person, int> {
 
 
 
-  static final PersonRepository _instance = PersonRepository._internal();
+  static  PersonRepository _instance = PersonRepository._internal();
   static PersonRepository get instance => _instance;
+  static set instance(PersonRepository repo) => _instance = repo;
 
   @override
   Future<Person> add(Person person) async {

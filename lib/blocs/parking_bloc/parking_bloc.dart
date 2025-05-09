@@ -3,11 +3,10 @@ import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 import 'parking_event.dart';
 import 'parking_state.dart';
 
-
 class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
-  final ParkingRepository _parkingRepository = ParkingRepository.instance;
+  final ParkingRepository _parkingRepository;
 
-  ParkingBloc() : super(ParkingInitial()) {
+  ParkingBloc(this._parkingRepository) : super(ParkingInitial()) {
     on<LoadParkings>(_onLoadParkings);
     on<AddParking>(_onAddParking);
     on<UpdateParking>(_onUpdateParking);
@@ -27,7 +26,7 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
   Future<void> _onAddParking(AddParking event, Emitter<ParkingState> emit) async {
     try {
       await _parkingRepository.add(event.parking);
-      add(LoadParkings()); // Refresh list
+      add(LoadParkings());
     } catch (e) {
       emit(ParkingError('Failed to add parking: $e'));
     }

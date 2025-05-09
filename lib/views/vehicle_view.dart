@@ -232,7 +232,7 @@ class VehicleView extends StatelessWidget {
 
                 final updatedVehicle = Car(
                   id: vehicle.id,
-                  registreringsNummer: regNum,
+                  registreringsNummer: regNum,  
                   typ: vehicle.typ,
                   owner: vehicle.owner,
                   color: color,

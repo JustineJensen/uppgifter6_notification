@@ -8,6 +8,7 @@ import 'package:uppgift1/models/vehicleType.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_event.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_state.dart';
+import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 
 class ParkingView extends StatelessWidget {
   const ParkingView({super.key});
@@ -15,7 +16,7 @@ class ParkingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ParkingBloc()..add(LoadParkings()),
+      create: (_) => ParkingBloc(ParkingRepository.instance)..add(LoadParkings()),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Manage Parking'),
