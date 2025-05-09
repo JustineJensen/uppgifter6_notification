@@ -5,9 +5,9 @@ import 'package:uppgift3_new_app/repositories/parkingSpaceRepository.dart';
 
 
 class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
-  final ParkingSpaceRepository _repository = ParkingSpaceRepository.instance;
+ final ParkingSpaceRepository repository;  
 
-  ParkingSpaceBloc() : super(ParkingSpaceInitial()) {
+  ParkingSpaceBloc(this.repository) : super(ParkingSpaceInitial()) {
     on<LoadParkingSpaces>(_onLoadParkingSpaces);
     on<AddParkingSpace>(_onAddParkingSpace);
     on<UpdateParkingSpace>(_onUpdateParkingSpace);
@@ -20,7 +20,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
   ) async {
     emit(ParkingSpaceLoading());
     try {
-      final spaces = await _repository.findAll();
+      final spaces = await repository.findAll();
       emit(ParkingSpaceLoaded(spaces));
     } catch (e) {
       emit(ParkingSpaceError('Failed to load parking spaces: ${e.toString()}'));
@@ -32,7 +32,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
     Emitter<ParkingSpaceState> emit,
   ) async {
     try {
-      await _repository.add(event.parkingSpace);
+      await repository.add(event.parkingSpace);
       add(LoadParkingSpaces());
     } catch (e) {
       emit(ParkingSpaceError('Failed to add parking space: ${e.toString()}'));
@@ -44,7 +44,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
     Emitter<ParkingSpaceState> emit,
   ) async {
     try {
-      await _repository.update(event.id, event.updatedSpace);
+      await repository.update(event.id, event.updatedSpace);
       add(LoadParkingSpaces());
     } catch (e) {
       emit(ParkingSpaceError('Failed to update parking space: ${e.toString()}'));
@@ -52,14 +52,17 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
   }
 
   Future<void> _onDeleteParkingSpace(
-    DeleteParkingSpace event,
-    Emitter<ParkingSpaceState> emit,
-  ) async {
-    try {
-      await _repository.deleteById(event.id);
-      add(LoadParkingSpaces());
-    } catch (e) {
-      emit(ParkingSpaceError('Failed to delete parking space: ${e.toString()}'));
+      DeleteParkingSpace event,
+      Emitter<ParkingSpaceState> emit,
+    ) async {
+      try {
+        await repository.deleteById(event.id);  
+        add(LoadParkingSpaces());
+      } catch (e) {
+        emit(ParkingSpaceError('Failed to delete parking space: ${e.toString()}'));
+      }
     }
-  }
+
 }
+
+
