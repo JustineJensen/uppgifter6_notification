@@ -3,7 +3,6 @@ import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_event.dart
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_state_bloc.dart';
 import 'package:uppgift3_new_app/repositories/parkingSpaceRepository.dart';
 
-
 class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
  final ParkingSpaceRepository repository;  
 

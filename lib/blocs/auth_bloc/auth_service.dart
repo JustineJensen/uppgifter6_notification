@@ -87,7 +87,6 @@ class AuthService {
       throw Exception("An error occurred");
     }
   }
-
   Future<void> signout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
     await Future.delayed(const Duration(seconds: 1));

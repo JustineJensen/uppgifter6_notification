@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:uppgift1/models/parking.dart';
+import 'package:uppgift3_new_app/models/parking.dart';
 
 
 abstract class ParkingState extends Equatable {

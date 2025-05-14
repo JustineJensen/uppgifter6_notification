@@ -1,115 +1,77 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:uppgift1/models/parkingSpace.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uppgift3_new_app/models/parkingSpace.dart';
 import 'package:uppgift3_new_app/repositories/fileRepository.dart';
 
-class ParkingSpaceRepository extends FileRepository<ParkingSpace,int> {
-  int _nextId =0;
-  final String baseUrl = 'http://10.0.2.2:8082/parkingSpaces';
-    ParkingSpaceRepository._internal():super('parkingSpace_data.json');
- 
+class ParkingSpaceRepository extends FileRepository<ParkingSpace, int> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  int _nextId = 0;
 
-   static final ParkingSpaceRepository _instance = ParkingSpaceRepository._internal();
+  ParkingSpaceRepository._internal() : super('parkingSpace_data.json');
 
-   static ParkingSpaceRepository get instance => _instance;
-    
-      @override
-    Future <ParkingSpace> add(ParkingSpace parkingSpace) async {
-       try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(parkingSpace.toJson()),
-      );
+  static final ParkingSpaceRepository _instance = ParkingSpaceRepository._internal();
+  static ParkingSpaceRepository get instance => _instance;
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return ParkingSpace.fromJson(jsonDecode(response.body));
-      } else {
-        throw Exception('Failed to add parking Space (HTTP ${response.statusCode})');
-      }
+  @override
+  Future<ParkingSpace> add(ParkingSpace parkingSpace) async {
+    try {
+      await _firestore.collection('parkingSpaces')
+          .doc(parkingSpace.id.toString())
+          .set(parkingSpace.toJson());
+
+      return parkingSpace;
     } catch (e) {
-      throw Exception('Error adding parking Space: $e');
+      throw Exception('Error adding parking space: $e');
     }
-   }
+  }
 
-   
-     @override
-    Future <void> deleteById(int id)async {
-       try {
-      final response = await http.delete(Uri.parse('$baseUrl/$id'));
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to delete parking space (HTTP ${response.statusCode})');
-      }
+  @override
+  Future<void> deleteById(int id) async {
+    try {
+      await _firestore.collection('parkingSpaces').doc(id.toString()).delete();
     } catch (e) {
       throw Exception('Error deleting parking space: $e');
     }
-     }
-   
-     @override
-     Future <List<ParkingSpace>> findAll() async {
-      try {
-      final response = await http.get(Uri.parse(baseUrl));
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body);
-        return jsonList.map((json) => ParkingSpace.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to fetch parking space (HTTP ${response.statusCode})');
-      }
+  }
+
+  @override
+  Future<List<ParkingSpace>> findAll() async {
+    try {
+      final snapshot = await _firestore.collection('parkingSpaces').get();
+      return snapshot.docs
+          .map((doc) => ParkingSpace.fromJson(doc.data()))
+          .toList();
     } catch (e) {
       throw Exception('Error fetching parking spaces: $e');
     }
+  }
 
-     }
-   
-     
-    @override
+  @override
   Future<ParkingSpace> findById(int id) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/$id'),
-        headers: {'Accept': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        if (jsonData is Map<String, dynamic>) {
-          return ParkingSpace.fromJson(jsonData);
-        } else {
-          throw Exception('Invalid data format received');
-        }
-      } else if (response.statusCode == 404) {
-        throw Exception('Parking space not found');
+      final doc = await _firestore.collection('parkingSpaces').doc(id.toString()).get();
+      if (doc.exists) {
+        return ParkingSpace.fromJson(doc.data()!);
       } else {
-        throw Exception('Failed to fetch parking space (HTTP ${response.statusCode})');
+        throw Exception('Parking space not found');
       }
     } catch (e) {
       throw Exception('Error finding parking space: $e');
     }
   }
-     @override
-     Future <ParkingSpace> update(int id,ParkingSpace newParkingSpace) async{
-       try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/$id'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(newParkingSpace.toJson()),
-      );
 
-      if (response.statusCode != 200) {
-        throw Exception('Failed to update parking space (HTTP ${response.statusCode})');
-      }
-      final updatedParkingSpace = ParkingSpace.fromJson(jsonDecode(response.body));
-      return updatedParkingSpace;
-
+  @override
+  Future<ParkingSpace> update(int id, ParkingSpace newParkingSpace) async {
+    try {
+      await _firestore
+          .collection('parkingSpaces')
+          .doc(id.toString())
+          .set(newParkingSpace.toJson());
+      return newParkingSpace;
     } catch (e) {
       throw Exception('Error updating parking space: $e');
     }
   }
-  Future<int> getNextId() async {
-  return _nextId++;
-}
 
   @override
   ParkingSpace fromJson(Map<String, dynamic> json) {
@@ -118,15 +80,36 @@ class ParkingSpaceRepository extends FileRepository<ParkingSpace,int> {
 
   @override
   int idFromType(ParkingSpace parkingSpace) {
-   return parkingSpace.id;
+    return parkingSpace.id;
   }
 
   @override
   Map<String, dynamic> toJson(ParkingSpace parkingSpace) {
     return parkingSpace.toJson();
   }
-    Future<File> _getLocalFile(String filename) async {
-  final directory = await getApplicationDocumentsDirectory();
-  return File('${directory.path}/$filename');
-}
+
+
+  Future<File> _getLocalFile(String filename) async {
+    throw UnimplementedError('Local file system not used with Firestore');
   }
+  Future<int> getNextId() async {
+    try {
+      final counterDoc = await _firestore.collection('counters').doc('parkingSpacesCounter').get();
+      int nextId = 1;
+
+      if (counterDoc.exists) {
+        nextId = counterDoc.data()!['nextId'];
+        await _firestore.collection('counters').doc('parkingSpacesCounter').update({
+          'nextId': nextId + 1,
+        });
+      } else {
+        await _firestore.collection('counters').doc('parkingSpacesCounter').set({
+          'nextId': 2, 
+        });
+      }
+      return nextId;
+    } catch (e) {
+      throw Exception('Error generating next ID: $e');
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:uppgift1/models/person.dart';
+import 'package:uppgift3_new_app/models/person.dart';
+
 
 
 abstract class PersonState extends Equatable {

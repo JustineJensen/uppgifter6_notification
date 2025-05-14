@@ -1,12 +1,12 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:uppgift1/models/car.dart';
-import 'package:uppgift1/models/person.dart';
-import 'package:uppgift1/models/vehicleType.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_bloc.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_event.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_state.dart';
+import 'package:uppgift3_new_app/models/car.dart';
+import 'package:uppgift3_new_app/models/person.dart';
+import 'package:uppgift3_new_app/models/vehicleType.dart';
 
 import '../mocks/mock_vehicle_repository.dart';
 

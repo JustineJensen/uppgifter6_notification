@@ -1,11 +1,10 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:uppgift1/models/parkingSpace.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_event.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_state_bloc.dart';
-import 'package:uppgift3_new_app/repositories/parkingSpaceRepository.dart';
+import 'package:uppgift3_new_app/models/parkingSpace.dart';
 import '../mocks/mock_parking_space_repository.dart';
 
 void main() {

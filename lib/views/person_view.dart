@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uppgift1/models/person.dart';
+
 import 'package:uppgift3_new_app/blocs/person_bloc/person_bloc.dart';
 import 'package:uppgift3_new_app/blocs/person_bloc/person_event.dart';
 import 'package:uppgift3_new_app/blocs/person_bloc/person_state.dart';
+import 'package:uppgift3_new_app/models/person.dart';
 
 class PersonView extends StatefulWidget {
   const PersonView({super.key});

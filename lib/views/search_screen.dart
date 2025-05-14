@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:uppgift1/models/parkingSpace.dart';
+import 'package:uppgift3_new_app/models/parkingSpace.dart';
+
 import 'package:uppgift3_new_app/repositories/parkingSpaceRepository.dart';
 
 class SearchScreen extends StatefulWidget {

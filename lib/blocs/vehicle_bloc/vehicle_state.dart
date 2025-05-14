@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:uppgift1/models/vehicle.dart';
+import 'package:uppgift3_new_app/models/vehicle.dart';
+
 
 abstract class VehicleState extends Equatable {
   @override

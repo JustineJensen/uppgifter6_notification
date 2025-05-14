@@ -1,32 +1,25 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:uppgift1/models/parking.dart';
-
-import 'package:path_provider/path_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uppgift3_new_app/models/parking.dart';
 import 'package:uppgift3_new_app/repositories/fileRepository.dart';
 
 class ParkingRepository extends FileRepository<Parking, int> {
-  final String baseUrl = 'http://10.0.2.2:8082/parking';
-  int _nextId=1;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  int _nextId = 1;
+
   ParkingRepository._internal() : super('parking_data.json');
+
   static final ParkingRepository _instance = ParkingRepository._internal();
   static ParkingRepository get instance => _instance;
 
-  
   @override
   Future<Parking> add(Parking parking) async {
     try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(parking.toJson()),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Parking.fromJson(jsonDecode(response.body));
-      } else {
-        throw Exception('Failed to add parking (HTTP ${response.statusCode}): ${response.body}');
-      }
+      await _firestore
+          .collection('parkings')
+          .doc(parking.id.toString())
+          .set(parking.toJson());
+      return parking;
     } catch (e) {
       throw Exception('Error adding parking: $e');
     }
@@ -35,10 +28,7 @@ class ParkingRepository extends FileRepository<Parking, int> {
   @override
   Future<void> deleteById(int id) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/$id'));
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to delete parking (HTTP ${response.statusCode})');
-      }
+      await _firestore.collection('parkings').doc(id.toString()).delete();
     } catch (e) {
       throw Exception('Error deleting parking: $e');
     }
@@ -47,13 +37,8 @@ class ParkingRepository extends FileRepository<Parking, int> {
   @override
   Future<List<Parking>> findAll() async {
     try {
-      final response = await http.get(Uri.parse(baseUrl));
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body);
-        return jsonList.map((json) => Parking.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to fetch parkings (HTTP ${response.statusCode})');
-      }
+      final snapshot = await _firestore.collection('parkings').get();
+      return snapshot.docs.map((doc) => Parking.fromJson(doc.data())).toList();
     } catch (e) {
       throw Exception('Error fetching parkings: $e');
     }
@@ -62,34 +47,35 @@ class ParkingRepository extends FileRepository<Parking, int> {
   @override
   Future<Parking> findById(int id) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/$id'));
-      if (response.statusCode == 200) {
-        return Parking.fromJson(jsonDecode(response.body));
+      final doc = await _firestore.collection('parkings').doc(id.toString()).get();
+      if (doc.exists) {
+        return Parking.fromJson(doc.data()!);
       } else {
-        throw Exception('Parking not found (HTTP ${response.statusCode})');
+        throw Exception('Parking not found');
       }
     } catch (e) {
       throw Exception('Error finding parking: $e');
     }
   }
 
-@override
+  @override
   Future<Parking> update(int id, Parking newParking) async {
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/$id'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(newParking.toJson()), 
-      );
-
-      if (response.statusCode == 200) {
-        return newParking;  
-      } else {
-        throw Exception('Failed to update parking (HTTP ${response.statusCode})');
-      }
+      await _firestore
+          .collection('parkings')
+          .doc(id.toString())
+          .set(newParking.toJson());
+      return newParking;
     } catch (e) {
       throw Exception('Error updating parking: $e');
     }
+  }
+  Stream<List<Parking>> parkingsStream() {
+    return FirebaseFirestore.instance
+        .collection('parkings')
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Parking.fromFirestore(doc.data())).toList());
   }
 
   @override
@@ -104,14 +90,14 @@ class ParkingRepository extends FileRepository<Parking, int> {
 
   @override
   Map<String, dynamic> toJson(Parking parking) {
-   return parking.toJson();
+    return parking.toJson();
   }
-  Future<int> getNextId() async {
-  return _nextId++;
-}
- Future<File> _getLocalFile(String filename) async {
-  final directory = await getApplicationDocumentsDirectory();
-  return File('${directory.path}/$filename');
-}
 
+  Future<int> getNextId() async {
+    return _nextId++;
+  }
+
+  Future<File> _getLocalFile(String filename) async {
+    throw UnimplementedError('Local file system not used with Firestore');
+  }
 }

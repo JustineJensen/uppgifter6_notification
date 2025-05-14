@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uppgift1/models/car.dart';
-import 'package:uppgift1/models/person.dart';
-import 'package:uppgift1/models/vehicle.dart';
-import 'package:uppgift1/models/vehicleType.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_bloc.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_event.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_state.dart';
+import 'package:uppgift3_new_app/models/car.dart';
+import 'package:uppgift3_new_app/models/person.dart';
+import 'package:uppgift3_new_app/models/vehicle.dart';
+import 'package:uppgift3_new_app/models/vehicleType.dart';
 import 'package:uppgift3_new_app/repositories/vehicleRepository.dart';
 
 class VehicleView extends StatelessWidget {
@@ -61,10 +61,12 @@ class VehicleView extends StatelessWidget {
                           itemCount: vehicles.length,
                           itemBuilder: (context, index) {
                             final vehicle = vehicles[index];
+            
                             return Card(
                               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               child: ListTile(
-                                title: Text('ID: ${vehicle.id}'),
+                                //title: Text('ID: ${vehicle.id}'),
+                                title: Text('${index + 1}'),
                                 subtitle: Text(
                                   'Reg Number: ${vehicle.registreringsNummer}\n'
                                   'Type: ${vehicle.typ.name}\n'
@@ -90,7 +92,7 @@ class VehicleView extends StatelessWidget {
                           },
                         );
                       }
-                      return const SizedBox(); // Default fallback
+                      return const SizedBox(); 
                     },
                   ),
                 ),

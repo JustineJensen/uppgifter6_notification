@@ -1,10 +1,11 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:uppgift1/models/person.dart';
+
 import 'package:uppgift3_new_app/blocs/person_bloc/person_bloc.dart';
 import 'package:uppgift3_new_app/blocs/person_bloc/person_event.dart';
 import 'package:uppgift3_new_app/blocs/person_bloc/person_state.dart';
+import 'package:uppgift3_new_app/models/person.dart';
 import 'package:uppgift3_new_app/repositories/personRepository.dart';
 
 import '../mocks/mock_person_repository.dart';

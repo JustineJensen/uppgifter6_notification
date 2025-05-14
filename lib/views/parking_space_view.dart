@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uppgift1/models/parkingSpace.dart';
+
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_event.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_state_bloc.dart';
+import 'package:uppgift3_new_app/models/parkingSpace.dart';
 
 class ParkingSpaceView extends StatelessWidget {
   const ParkingSpaceView({super.key});
@@ -58,7 +59,7 @@ class ParkingSpaceView extends StatelessWidget {
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             child: ListTile(
-                              title: Text('ID: ${space.id}'),
+                              title: Text('ID: ${index + 1}'),
                               subtitle: Text('Address: ${space.adress}\nPrice per hour: ${space.pricePerHour} kr'),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,

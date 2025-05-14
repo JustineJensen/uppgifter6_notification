@@ -1,36 +1,25 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:uppgift1/models/person.dart';
-import 'package:path_provider/path_provider.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uppgift3_new_app/models/person.dart';
 import 'package:uppgift3_new_app/repositories/fileRepository.dart';
 
 class PersonRepository extends FileRepository<Person, int> {
-  final String baseUrl = 'http://10.0.2.2:8082/person';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  PersonRepository._internal() : super('person_data.json');
 
-  // Singleton pattern for PersonRepository
-  PersonRepository._internal() : super('person_data.json'); 
-
-
-
-  static  PersonRepository _instance = PersonRepository._internal();
+  static PersonRepository _instance = PersonRepository._internal();
   static PersonRepository get instance => _instance;
   static set instance(PersonRepository repo) => _instance = repo;
 
   @override
   Future<Person> add(Person person) async {
     try {
-      final response = await http.post(
-        Uri.parse(baseUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(person.toJson()),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return Person.fromJson(jsonDecode(response.body));
-      } else {
-        throw Exception('Failed to add person (HTTP ${response.statusCode})');
-      }
+      await _firestore
+          .collection('persons')
+          .doc(person.id.toString())
+          .set(person.toJson());
+      return person;
     } catch (e) {
       throw Exception('Error adding person: $e');
     }
@@ -39,10 +28,7 @@ class PersonRepository extends FileRepository<Person, int> {
   @override
   Future<void> deleteById(int id) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/$id'));
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to delete person (HTTP ${response.statusCode})');
-      }
+      await _firestore.collection('persons').doc(id.toString()).delete();
     } catch (e) {
       throw Exception('Error deleting person: $e');
     }
@@ -51,53 +37,42 @@ class PersonRepository extends FileRepository<Person, int> {
   @override
   Future<List<Person>> findAll() async {
     try {
-      final response = await http.get(Uri.parse(baseUrl));
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body);
-        return jsonList.map((json) => Person.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to fetch persons (HTTP ${response.statusCode})');
-      }
+      final snapshot = await _firestore.collection('persons').get();
+      return snapshot.docs
+          .map((doc) => Person.fromJson(doc.data()))
+          .toList();
     } catch (e) {
       throw Exception('Error fetching persons: $e');
     }
   }
 
   @override
-Future<Person?> findById(int id) async {
-  try {
-    final response = await http.get(Uri.parse('$baseUrl/$id'));
-    if (response.statusCode == 200) {
-      return Person.fromJson(jsonDecode(response.body));
-    } else if (response.statusCode == 404) {
-      return null; 
-    } else {
-      throw Exception('Unexpected error (HTTP ${response.statusCode})');
+  Future<Person?> findById(int id) async {
+    try {
+      final doc =
+          await _firestore.collection('persons').doc(id.toString()).get();
+      if (doc.exists) {
+        return Person.fromJson(doc.data()!);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      throw Exception('Error finding person: $e');
     }
-  } catch (e) {
-    throw Exception('Error finding person: $e');
   }
-}
-
 
   @override
-Future<Person> update(int id, Person newPerson) async {
-  try {
-    final response = await http.put(
-      Uri.parse('$baseUrl/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(newPerson.toJson()),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update person (HTTP ${response.statusCode})');
+  Future<Person> update(int id, Person newPerson) async {
+    try {
+      await _firestore
+          .collection('persons')
+          .doc(id.toString())
+          .set(newPerson.toJson());
+      return newPerson;
+    } catch (e) {
+      throw Exception('Error updating person: $e');
     }
-
-    return Person.fromJson(jsonDecode(response.body));
-  } catch (e) {
-    throw Exception('Error updating person: $e');
   }
-}
 
   @override
   Person fromJson(Map<String, dynamic> json) {
@@ -113,10 +88,9 @@ Future<Person> update(int id, Person newPerson) async {
   Map<String, dynamic> toJson(Person person) {
     return person.toJson();
   }
-  Future<File> _getLocalFile(String filename) async {
-  final directory = await getApplicationDocumentsDirectory();
-  return File('${directory.path}/$filename');
-}
 
-  
+
+  Future<File> _getLocalFile(String filename) async {
+    throw UnimplementedError('Local file system not used with Firestore');
+  }
 }

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uppgift1/models/car.dart';
-import 'package:uppgift1/models/parking.dart';
-import 'package:uppgift1/models/parkingSpace.dart';
-import 'package:uppgift1/models/person.dart';
-import 'package:uppgift1/models/vehicleType.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_event.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_state.dart';
+import 'package:uppgift3_new_app/models/car.dart';
+import 'package:uppgift3_new_app/models/parking.dart';
+import 'package:uppgift3_new_app/models/parkingSpace.dart';
+import 'package:uppgift3_new_app/models/person.dart';
+import 'package:uppgift3_new_app/models/vehicleType.dart';
 import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 
 class ParkingView extends StatelessWidget {

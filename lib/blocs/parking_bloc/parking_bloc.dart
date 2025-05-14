@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uppgift3_new_app/models/parking.dart';
 import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 import 'parking_event.dart';
 import 'parking_state.dart';
@@ -13,17 +14,17 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     on<DeleteParking>(_onDeleteParking);
   }
 
-  Future<void> _onLoadParkings(LoadParkings event, Emitter<ParkingState> emit) async {
-    emit(ParkingLoading());
-    try {
-      final parkings = await _parkingRepository.findAll();
-      emit(ParkingLoaded(parkings));
-    } catch (e) {
-      emit(ParkingError('Failed to load parkings: $e'));
-    }
-  }
+ Future<void> _onLoadParkings(LoadParkings event, Emitter<ParkingState> emit) async {
+  emit(ParkingLoading());
 
-  Future<void> _onAddParking(AddParking event, Emitter<ParkingState> emit) async {
+  await emit.forEach<List<Parking>>(
+    _parkingRepository.parkingsStream(), 
+    onData: (parkings) => ParkingLoaded(parkings),
+    onError: (error, stackTrace) => ParkingError('Failed to load parkings: $error'),
+  );
+}
+
+Future<void> _onAddParking(AddParking event, Emitter<ParkingState> emit) async {
     try {
       await _parkingRepository.add(event.parking);
       add(LoadParkings());
@@ -49,4 +50,5 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
       emit(ParkingError('Failed to delete parking: $e'));
     }
   }
+  
 }

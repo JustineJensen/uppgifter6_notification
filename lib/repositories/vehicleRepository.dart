@@ -1,136 +1,115 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:uppgift1/models/car.dart'; 
-import 'package:uppgift1/models/vehicle.dart';
 
-import 'package:path_provider/path_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uppgift3_new_app/models/car.dart';
+import 'package:uppgift3_new_app/models/vehicle.dart';
+
 import 'package:uppgift3_new_app/repositories/fileRepository.dart';
 
 class VehicleRepository extends FileRepository<Vehicle, int> {
-  final String _baseUrl = 'http://10.0.2.2:8082/vehicles';
-
+ 
    int _nextId =0;
   VehicleRepository._internal():super('vehicle_data.json');
   static final VehicleRepository _instance = VehicleRepository._internal();
   static VehicleRepository get instance => _instance;
 
-@override
- Future<Vehicle> add(Vehicle vehicle) async {
-  try {
-    final response = await http.post(
-      Uri.parse(_baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(vehicle.toJson()),
-    ).timeout(Duration(seconds: 10)); 
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return Car.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to create vehicle: ${response.statusCode}. Response body: ${response.body}');
-    }
-  } catch (e) {
-    rethrow;
-  }
-}
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
-  Future<void> deleteById(int id) async {
-    final response = await http.delete(Uri.parse('$_baseUrl/$id'));
-
-    if (response.statusCode != 204) {
-      throw Exception('Failed to delete vehicle: ${response.statusCode}');
-    }
+  Future<Vehicle> add(Vehicle vehicle) async {
+    await FirebaseFirestore.instance
+        .collection("vehicles")
+        .doc(vehicle.id.toString())
+        .set(vehicle.toJson());
+    return vehicle;
   }
 
   @override
-  Future<List<Vehicle>> findAll() async {
-    final response = await http.get(Uri.parse(_baseUrl));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => Car.fromJson(json)).toList(); 
-    } else {
-      throw Exception('Failed to load vehicles: ${response.statusCode}');
+    Future<void> deleteById(int id) async {
+      await _firestore.collection('vehicles')
+      .doc(id.toString()).delete();
     }
-  }
 
-  @override
-  Future<Vehicle> findById(int id) async {
-    final response = await http.get(Uri.parse('$_baseUrl/$id'));
-
-    if (response.statusCode == 200) {
-      return Car.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to load vehicle: ${response.statusCode}');
+    @override
+    Future<List<Vehicle>> findAll() async {
+      final snapshot = await _firestore
+      .collection('vehicles').get();
+      return snapshot.docs
+      .map((doc) => Car
+      .fromJson(doc.data()))
+      .toList();
     }
-  }
 
- @override
-  Future<Vehicle> update(int id, Vehicle newVehicle) async {
-    final response = await http.put(
-      Uri.parse('$_baseUrl/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(newVehicle.toJson()),
-    );
-
-    if (response.statusCode == 200) {
-      final vehicles = await readFile();
-      final index = vehicles.indexWhere((vehicle) => vehicle.id == id);
-      if (index == -1) throw Exception("Vehicle not found");
-      vehicles[index] = newVehicle;
-      await writeFile(vehicles);
-
-      return Car.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to update vehicle: ${response.statusCode}');
+    @override
+    Future<Vehicle> findById(int id) async {
+      final doc = await _firestore
+      .collection('vehicles')
+      .doc(id.toString()).get();
+      if (doc.exists) {
+        return Car
+        .fromJson(doc.data()!);
+      } else {
+        throw Exception('Vehicle with ID $id not found');
+      }
     }
-  }
 
-  @override
-  Future<Vehicle> findByRegNum(String regNum) async {
-    final response = await http.get(Uri.parse('$_baseUrl?registreringsNummer=$regNum'));
+    @override
+    Future<Vehicle> update(int id, Vehicle newVehicle) async {
+      final docRef = _firestore.collection('vehicles').doc(id.toString());
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      if (data.isNotEmpty) {
-        return Car.fromJson(data.first); 
+      await docRef.set(newVehicle.toJson());
+      final updatedDoc = await docRef.get();
+      return Car.fromJson(updatedDoc.data()!);
+    }
+
+    @override
+    Future<Vehicle> findByRegNum(String regNum) async {
+      final snapshot = await _firestore
+          .collection('vehicles')
+          .where('registreringsNummer', isEqualTo: regNum)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        return Car.fromJson(snapshot.docs.first.data());
       } else {
         throw Exception('Vehicle with registration number $regNum not found');
       }
-    } else {
-      throw Exception('Failed to load vehicle: ${response.statusCode}');
     }
-  }
 
   @override
   Future<Vehicle?> getVehicleByRegNum(String regNum) async {
-    try {
-      return await findByRegNum(regNum);
-    } catch (e) {
-      return null;
+      try {
+        return await findByRegNum(regNum);
+      } catch (_) {
+        return null;
+      }
     }
-  }
-  
+
   @override
   Vehicle fromJson(Map<String, dynamic> json) {
-   return Car.fromJson(json);
-  }
-  
+      return Car.fromJson(json);
+    }
+
   @override
   int idFromType(Vehicle vehicle) {
-    return vehicle.id;
-  }
-  
+      return vehicle.id;
+    }
+
   @override
   Map<String, dynamic> toJson(Vehicle vehicle) {
-    return vehicle.toJson();
-  }
-   Future<File> _getLocalFile(String filename) async {
-  final directory = await getApplicationDocumentsDirectory();
-  return File('${directory.path}/$filename');
-}
+      return vehicle.toJson();
+    }
+
   Future<int> getNextId() async {
-    return _nextId++;
+      final snapshot = await _firestore
+          .collection('vehicles')
+          .orderBy('id', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) {
+        return 1;
+      } else {
+        return snapshot.docs.first['id'] + 1;
+      }
+    }
   }
-}
