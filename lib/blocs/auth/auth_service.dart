@@ -4,6 +4,8 @@ import 'package:uppgift3_new_app/main.dart';
 import 'package:uppgift3_new_app/views/home.dart';
 
 class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Future<void> signup({
     required String name,
     required String email,
@@ -11,14 +13,13 @@ class AuthService {
     required BuildContext context,
   }) async {
     try {
-      // 1. Create user with email and password
+     
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // 2. Update the user's display name
       await userCredential.user?.updateDisplayName(name);
       await userCredential.user?.reload(); 
 
@@ -87,6 +88,7 @@ class AuthService {
       throw Exception("An error occurred");
     }
   }
+  
   Future<void> signout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
     await Future.delayed(const Duration(seconds: 1));

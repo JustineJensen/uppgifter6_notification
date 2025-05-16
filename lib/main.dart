@@ -1,9 +1,8 @@
 import 'dart:ui';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:uppgift3_new_app/blocs/auth_bloc/auth_bloc.dart';
+import 'package:uppgift3_new_app/blocs/auth/auth_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_event.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_bloc.dart';
@@ -12,7 +11,6 @@ import 'package:uppgift3_new_app/blocs/person_bloc/person_bloc.dart';
 import 'package:uppgift3_new_app/blocs/person_bloc/person_event.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_bloc.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_event.dart';
-
 import 'package:uppgift3_new_app/firebase_options.dart';
 import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 import 'package:uppgift3_new_app/repositories/parkingSpaceRepository.dart';

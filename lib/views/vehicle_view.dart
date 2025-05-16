@@ -65,7 +65,6 @@ class VehicleView extends StatelessWidget {
                             return Card(
                               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               child: ListTile(
-                                //title: Text('ID: ${vehicle.id}'),
                                 title: Text('${index + 1}'),
                                 subtitle: Text(
                                   'Reg Number: ${vehicle.registreringsNummer}\n'

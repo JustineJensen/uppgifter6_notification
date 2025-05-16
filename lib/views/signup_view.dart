@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uppgift3_new_app/blocs/auth_bloc/auth_bloc.dart';
+import 'package:uppgift3_new_app/blocs/auth/auth_bloc.dart';
 import 'package:uppgift3_new_app/views/home.dart';
 
 class SignupScreen extends StatelessWidget {
