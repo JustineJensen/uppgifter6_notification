@@ -15,7 +15,7 @@ class VehicleView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => VehicleBloc(VehicleRepository.instance)..add(LoadVehicles()),
+      create: (_) => VehicleBloc(VehicleRepository.instance)..add(StreamVehicles()),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Manage Vehicles'),

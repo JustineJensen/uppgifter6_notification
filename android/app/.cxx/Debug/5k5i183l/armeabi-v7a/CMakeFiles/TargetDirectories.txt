@@ -1,0 +1,2 @@
+C:/Users/justi/Desktop/uppgifter/uppgift3_new_app/android/app/.cxx/Debug/5k5i183l/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/justi/Desktop/uppgifter/uppgift3_new_app/android/app/.cxx/Debug/5k5i183l/armeabi-v7a/CMakeFiles/rebuild_cache.dir

@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uppgift3_new_app/models/person.dart';
 import 'package:uppgift3_new_app/repositories/personRepository.dart';
 import 'person_event.dart';
 import 'person_state.dart';
@@ -11,6 +14,7 @@ class PersonBloc extends Bloc<PersonEvent, PersonState> {
     on<AddPerson>(_onAddPerson);
     on<UpdatePerson>(_onUpdatePerson);
     on<DeletePerson>(_onDeletePerson);
+    on<StreamPersons>(_onStreamPersons);
   }
 
   Future<void> _onLoadPersons(LoadPersons event, Emitter<PersonState> emit) async {
@@ -26,7 +30,7 @@ class PersonBloc extends Bloc<PersonEvent, PersonState> {
   Future<void> _onAddPerson(AddPerson event, Emitter<PersonState> emit) async {
     try {
       await _personRepository.add(event.person);
-      add(LoadPersons()); 
+      //add(LoadPersons()); 
     } catch (e) {
       emit(PersonError('Failed to add person: $e'));
     }
@@ -35,7 +39,7 @@ class PersonBloc extends Bloc<PersonEvent, PersonState> {
   Future<void> _onUpdatePerson(UpdatePerson event, Emitter<PersonState> emit) async {
     try {
       await _personRepository.update(event.id, event.updatedPerson);
-      add(LoadPersons());
+      //add(LoadPersons());
     } catch (e) {
       emit(PersonError('Failed to update person: $e'));
     }
@@ -44,9 +48,19 @@ class PersonBloc extends Bloc<PersonEvent, PersonState> {
   Future<void> _onDeletePerson(DeletePerson event, Emitter<PersonState> emit) async {
     try {
       await _personRepository.deleteById(event.id);
-      add(LoadPersons());
+      //add(LoadPersons());
     } catch (e) {
       emit(PersonError('Failed to delete person: $e'));
     }
   }
+
+  Future<void> _onStreamPersons(StreamPersons event, Emitter<PersonState> emit) async {
+  emit(PersonLoading());
+
+  await emit.forEach<List<Person>>(
+    _personRepository.streamAllPersons(),
+    onData: (persons) => PersonLoaded(persons),
+    onError: (error, _) => PersonError('Stream error: $error'),
+  );
+}
 }

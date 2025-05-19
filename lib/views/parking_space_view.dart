@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_event.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_state_bloc.dart';
+
 import 'package:uppgift3_new_app/models/parkingSpace.dart';
 
 class ParkingSpaceView extends StatelessWidget {

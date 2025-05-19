@@ -84,6 +84,13 @@ class VehicleRepository extends FileRepository<Vehicle, int> {
       }
     }
 
+    Stream<List<Vehicle>> streamAllVehicles() {
+    return _firestore.collection('vehicles').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => Car.fromJson(doc.data())).toList();
+    });
+  }
+
+
   @override
   Vehicle fromJson(Map<String, dynamic> json) {
       return Car.fromJson(json);

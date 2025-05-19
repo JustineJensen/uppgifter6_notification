@@ -88,7 +88,7 @@ class _PersonViewState extends State<PersonView> {
   @override
   void initState() {
     super.initState();
-    _viewAllPersons();
+    context.read<PersonBloc>().add(StreamPersons());
   }
 
   @override

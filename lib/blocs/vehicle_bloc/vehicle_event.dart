@@ -8,6 +8,7 @@ abstract class VehicleEvent extends Equatable {
 }
 
 class LoadVehicles extends VehicleEvent {}
+class StreamVehicles extends VehicleEvent {}
 
 class AddVehicle extends VehicleEvent {
   final Vehicle vehicle;

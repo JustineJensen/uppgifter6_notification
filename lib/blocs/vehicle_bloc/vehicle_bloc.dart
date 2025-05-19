@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uppgift3_new_app/models/vehicle.dart';
 import 'package:uppgift3_new_app/repositories/vehicleRepository.dart';
 import 'vehicle_event.dart';
 import 'vehicle_state.dart';
@@ -13,6 +16,7 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
     on<DeleteVehicle>(_onDeleteVehicle);
     on<FindVehicleById>(_onFindById);
     on<FindVehicleByRegNum>(_onFindByRegNum);
+    on<StreamVehicles>(_onStreamVehicles);
   }
 
   Future<void> _onLoadVehicles(LoadVehicles event, Emitter<VehicleState> emit) async {
@@ -74,4 +78,15 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
       emit(VehicleError(e.toString()));
     }
   }
+
+ Future<void> _onStreamVehicles(StreamVehicles event, Emitter<VehicleState> emit) async {
+  emit(VehicleLoading());
+
+  await emit.forEach<List<Vehicle>>(
+    repository.streamAllVehicles(),
+    onData: (vehicles) => VehiclesLoaded(vehicles),
+    onError: (error, stackTrace) => VehicleError('Stream error: $error'),
+  );
+}
+
 }

@@ -112,4 +112,13 @@ class ParkingSpaceRepository extends FileRepository<ParkingSpace, int> {
       throw Exception('Error generating next ID: $e');
     }
   }
+  Stream<List<ParkingSpace>> parkingSpacesStream() {
+  return _firestore
+      .collection('parkingSpaces')
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+          .map((doc) => ParkingSpace.fromJson(doc.data()))
+          .toList());
+}
+
 }

@@ -8,6 +8,8 @@ abstract class ParkingEvent extends Equatable {
 
 class LoadParkings extends ParkingEvent {}
 
+class StreamParkings extends ParkingEvent {}
+
 class AddParking extends ParkingEvent {
   final Parking parking;
 

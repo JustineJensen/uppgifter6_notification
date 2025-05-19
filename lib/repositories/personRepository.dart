@@ -73,6 +73,14 @@ class PersonRepository extends FileRepository<Person, int> {
       throw Exception('Error updating person: $e');
     }
   }
+    Stream<List<Person>> streamAllPersons() {
+    return _firestore.collection('persons').snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => Person.fromJson(doc.data()))
+          .toList();
+    });
+  }
+
 
   @override
   Person fromJson(Map<String, dynamic> json) {

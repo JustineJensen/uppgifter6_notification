@@ -1,4 +1,4 @@
-import 'dart:convert';
+
 import 'package:uppgift3_new_app/models/car.dart';
 import 'package:uppgift3_new_app/models/parkingSpace.dart';
 import 'package:uppgift3_new_app/models/vehicle.dart';

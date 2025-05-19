@@ -6,6 +6,7 @@ abstract class PersonEvent extends Equatable {
   @override
   List<Object?> get props => [];
 }
+class StreamPersons extends PersonEvent {}
 
 class LoadPersons extends PersonEvent {}
 

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_event.dart';
 import 'package:uppgift3_new_app/blocs/parkingspace_bloc/parkingspace_state_bloc.dart';
+import 'package:uppgift3_new_app/models/parkingSpace.dart';
 import 'package:uppgift3_new_app/repositories/parkingSpaceRepository.dart';
 
 class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
@@ -14,17 +15,18 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
   }
 
   Future<void> _onLoadParkingSpaces(
-    LoadParkingSpaces event,
-    Emitter<ParkingSpaceState> emit,
-  ) async {
-    emit(ParkingSpaceLoading());
-    try {
-      final spaces = await repository.findAll();
-      emit(ParkingSpaceLoaded(spaces));
-    } catch (e) {
-      emit(ParkingSpaceError('Failed to load parking spaces: ${e.toString()}'));
-    }
-  }
+  LoadParkingSpaces event,
+  Emitter<ParkingSpaceState> emit,
+) async {
+  emit(ParkingSpaceLoading());
+
+  await emit.forEach<List<ParkingSpace>>(
+    repository.parkingSpacesStream(),
+    onData: (spaces) => ParkingSpaceLoaded(spaces),
+    onError: (error, stackTrace) =>
+        ParkingSpaceError('Failed to load parking spaces: $error'),
+  );
+}
 
   Future<void> _onAddParkingSpace(
     AddParkingSpace event,
@@ -32,7 +34,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
   ) async {
     try {
       await repository.add(event.parkingSpace);
-      add(LoadParkingSpaces());
+      //add(LoadParkingSpaces());
     } catch (e) {
       emit(ParkingSpaceError('Failed to add parking space: ${e.toString()}'));
     }
@@ -44,7 +46,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
   ) async {
     try {
       await repository.update(event.id, event.updatedSpace);
-      add(LoadParkingSpaces());
+      //add(LoadParkingSpaces());
     } catch (e) {
       emit(ParkingSpaceError('Failed to update parking space: ${e.toString()}'));
     }
@@ -56,7 +58,7 @@ class ParkingSpaceBloc extends Bloc<ParkingSpaceEvent, ParkingSpaceState> {
     ) async {
       try {
         await repository.deleteById(event.id);  
-        add(LoadParkingSpaces());
+       // add(LoadParkingSpaces());
       } catch (e) {
         emit(ParkingSpaceError('Failed to delete parking space: ${e.toString()}'));
       }

@@ -10,6 +10,8 @@ abstract class ParkingSpaceEvent extends Equatable {
 
 class LoadParkingSpaces extends ParkingSpaceEvent {}
 
+class StreamParkingSpace extends ParkingSpaceEvent {}
+
 class AddParkingSpace extends ParkingSpaceEvent {
   final ParkingSpace parkingSpace;
 

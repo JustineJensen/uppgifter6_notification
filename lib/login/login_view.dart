@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uppgift3_new_app/blocs/auth/auth_bloc.dart';
 import 'package:uppgift3_new_app/views/home.dart';
 import 'package:uppgift3_new_app/views/signup_view.dart';
-import 'package:uppgift3_new_app/blocs/auth/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginView extends StatelessWidget {

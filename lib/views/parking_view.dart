@@ -10,13 +10,31 @@ import 'package:uppgift3_new_app/models/person.dart';
 import 'package:uppgift3_new_app/models/vehicleType.dart';
 import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 
-class ParkingView extends StatelessWidget {
+class ParkingView extends StatefulWidget {
   const ParkingView({super.key});
+
+  @override
+  State<ParkingView> createState() => _ParkingViewState();
+}
+
+class _ParkingViewState extends State<ParkingView> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<ParkingBloc>().add(StreamParkings());
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => ParkingBloc(ParkingRepository.instance)..add(LoadParkings()),
+    create: (context) {
+      final bloc = ParkingBloc(ParkingRepository.instance);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        bloc.add(StreamParkings());
+      });
+      return bloc;
+    },
+
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Manage Parking'),
