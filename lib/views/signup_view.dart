@@ -20,7 +20,7 @@ class SignupScreen extends StatelessWidget {
             if (state is AuthSuccess) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const Home(title: 'Parking App')),
+                MaterialPageRoute(builder: (_) => const Home(title: 'Parking App',)),
               );
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(

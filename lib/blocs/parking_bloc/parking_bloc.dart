@@ -18,15 +18,15 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
 
   }
 
- Future<void> _onLoadParkings(LoadParkings event, Emitter<ParkingState> emit) async {
-  emit(ParkingLoading());
+  Future<void> _onLoadParkings(LoadParkings event, Emitter<ParkingState> emit) async {
+    emit(ParkingLoading());
 
-  await emit.forEach<List<Parking>>(
-    _parkingRepository.parkingsStream(), 
-    onData: (parkings) => ParkingLoaded(parkings),
-    onError: (error, stackTrace) => ParkingError('Failed to load parkings: $error'),
-  );
-}
+    await emit.forEach<List<Parking>>(
+      _parkingRepository.parkingsStream(), 
+      onData: (parkings) => ParkingLoaded(parkings),
+      onError: (error, stackTrace) => ParkingError('Failed to load parkings: $error'),
+    );
+  }
 
 Future<void> _onAddParking(AddParking event, Emitter<ParkingState> emit) async {
     try {

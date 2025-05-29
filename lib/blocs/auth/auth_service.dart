@@ -6,13 +6,13 @@ import 'package:uppgift3_new_app/views/home.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<void> signup({
-    required String name,
-    required String email,
-    required String password,
-    required BuildContext context,
-  }) async {
-    try {
+    Future<void> signup({
+      required String name,
+      required String email,
+      required String password,
+      required BuildContext context,
+    }) async {
+      try {
      
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
@@ -51,21 +51,21 @@ class AuthService {
     }
   }
 
-  Future<void> signin({
-    required String email,
-    required String password,
-    required BuildContext context,
-  }) async {
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      await Future.delayed(const Duration(seconds: 1));
+    Future<void> signin({
+      required String email,
+      required String password,
+      required BuildContext context,
+    }) async {
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        await Future.delayed(const Duration(seconds: 1));
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
           builder: (context) => const Home(title: 'Parking App'),
         ),
       );
@@ -89,15 +89,15 @@ class AuthService {
     }
   }
   
-  Future<void> signout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    await Future.delayed(const Duration(seconds: 1));
+    Future<void> signout(BuildContext context) async {
+      await FirebaseAuth.instance.signOut();
+      await Future.delayed(const Duration(seconds: 1));
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const MyApp(),
-      ),
-    );
-  }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MyApp(),
+        ),
+      );
+    }
 }

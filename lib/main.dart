@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:uppgift3_new_app/blocs/auth/auth_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_event.dart';
@@ -22,20 +23,47 @@ import 'package:uppgift3_new_app/views/vehicle_view.dart';
 import 'package:uppgift3_new_app/views/parking_view.dart';
 import 'package:uppgift3_new_app/views/parking_space_view.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    runApp(const MyApp());
-  } catch (e) {
-    print('Firebase init failed: $e');
+
+   // plugin
+ Future<FlutterLocalNotificationsPlugin> initializeNotifications() async { 
+      var flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(); 
+      //plattform's specific settings
+      var initializationSettingsAndroid = const AndroidInitializationSettings( 
+      '@drawable/ic_notification'); 
+      var initializationSettingsIOS = const DarwinInitializationSettings(); 
+      var initializationSettingsLinux = const LinuxInitializationSettings(defaultActionName:'Open notification' );
+      
+      const WindowsInitializationSettings initializationSettingsWindows = 
+      WindowsInitializationSettings( 
+          appName: 'Parking App', 
+          appUserModelId: 'com.example.uppgift3_new_app', 
+
+          guid: 
+      'e7931fae-e26c-4b15-8dff-17acf98602d6'); 
+      var initializationSettings = InitializationSettings( 
+            android: initializationSettingsAndroid, 
+            iOS: initializationSettingsIOS, 
+            windows: initializationSettingsWindows,
+            linux:initializationSettingsLinux ); 
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings); 
+      return flutterLocalNotificationsPlugin; 
+     }
+  void main() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    var notificationPlugin = await initializeNotifications();
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      runApp(const MyApp());
+    } catch (e) {
+      print('Firebase init failed: $e');
+    }
   }
-}
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
+  
 
   @override
   _MyAppState createState() => _MyAppState();
