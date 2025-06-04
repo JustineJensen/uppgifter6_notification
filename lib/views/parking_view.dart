@@ -13,8 +13,6 @@ import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 import 'package:uppgift3_new_app/models/person.dart' as app_model;
 
 
-
-
 class ParkingView extends StatefulWidget {
    
   const ParkingView({super.key});

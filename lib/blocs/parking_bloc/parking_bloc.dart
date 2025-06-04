@@ -20,7 +20,6 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     on<UpdateParking>(_onUpdateParking);
     on<DeleteParking>(_onDeleteParking);
     on<StreamParkings>(_onStreamParkings);
-
   }
 
   Future<void> _onLoadParkings(LoadParkings event, Emitter<ParkingState> emit) async {
@@ -63,9 +62,6 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     emit(ParkingError('Failed to add parking: $e'));
   }
 }
-
-
-
   Future<void> _onUpdateParking(UpdateParking event, Emitter<ParkingState> emit) async {
   try {
     await _parkingRepository.update(event.id, event.updatedParking);

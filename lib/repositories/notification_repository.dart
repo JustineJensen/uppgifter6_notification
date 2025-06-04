@@ -65,7 +65,8 @@ class NotificationRepository {
       channelDescription: channelDescription,
       importance: Importance.max,
       priority: Priority.high,
-      ticker: 'ticker',
+      ticker: 'ticker', 
+    
     );
 
     var darwinPlatformChannelSpecifics = const DarwinNotificationDetails();
