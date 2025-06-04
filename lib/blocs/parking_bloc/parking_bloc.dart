@@ -2,14 +2,19 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uppgift3_new_app/models/parking.dart';
+import 'package:uppgift3_new_app/repositories/notification_repository.dart';
 import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 import 'parking_event.dart';
 import 'parking_state.dart';
+import 'package:intl/intl.dart';
+import 'package:timezone/timezone.dart' as tz;
+
 
 class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
   final ParkingRepository _parkingRepository;
-
-  ParkingBloc(this._parkingRepository) : super(ParkingInitial()) {
+  final NotificationRepository _notificationRepository;
+ 
+  ParkingBloc(this._parkingRepository,this._notificationRepository) : super(ParkingInitial()) {
     on<LoadParkings>(_onLoadParkings);
     on<AddParking>(_onAddParking);
     on<UpdateParking>(_onUpdateParking);
@@ -28,21 +33,73 @@ class ParkingBloc extends Bloc<ParkingEvent, ParkingState> {
     );
   }
 
-Future<void> _onAddParking(AddParking event, Emitter<ParkingState> emit) async {
+  Future<void> _onAddParking(AddParking event, Emitter<ParkingState> emit) async {
     try {
       await _parkingRepository.add(event.parking);
+
+      final parking = event.parking;
+      final endTime = parking.endTime;
+      final regNumber = parking.fordon.registreringsNummer;
+      final tzTime = tz.TZDateTime.from(endTime!, tz.local);
+      final formattedTime = DateFormat.Hm().format(tzTime);
+
+      if (endTime != null) {
+        await _notificationRepository.scheduleParkingReminder(
+          id: _safeNotificationId(parking, 0),
+          title: 'Parkering går snart ut!',
+          content: 'Din parkering för $regNumber går ut om 5 minuter!($formattedTime)',
+          endTime: endTime,
+          reminderTime: const Duration(minutes: 5),
+        );
+
+        await _notificationRepository.scheduleParkingReminder(
+          id: _safeNotificationId(parking, 1),
+
+          title: 'Parkeringstid är slut!',
+          content: 'Din parkering för $regNumber har gått ut.',
+          endTime: endTime,
+          reminderTime: Duration.zero,
+        );
+      }
+
     } catch (e) {
       emit(ParkingError('Failed to add parking: $e'));
     }
   }
 
+
   Future<void> _onUpdateParking(UpdateParking event, Emitter<ParkingState> emit) async {
-    try {
-      await _parkingRepository.update(event.id, event.updatedParking);
-    } catch (e) {
-      emit(ParkingError('Failed to update parking: $e'));
+  try {
+    await _parkingRepository.update(event.id, event.updatedParking);
+
+    final parking = event.updatedParking;
+    final endTime = parking.endTime;
+
+    if (endTime != null) {
+      final regNumber = parking.fordon.registreringsNummer;
+
+      await _notificationRepository.scheduleParkingReminder(
+        id: _safeNotificationId(parking, 0),
+        title: "Parkering går snart ut",
+        content: "Din parkering för $regNumber går ut om 5 minuter!",
+        endTime: endTime,
+        reminderTime: const Duration(minutes: 5),
+      );
+
+      await _notificationRepository.scheduleParkingReminder(
+        id: _safeNotificationId(parking, 1),
+        title: "Parkering avslutad",
+        content: "Din parkering för $regNumber har nu gått ut.",
+        endTime: endTime,
+        reminderTime: Duration.zero,
+      );
     }
+
+  } catch (e) {
+    emit(ParkingError('Failed to update parking: $e'));
   }
+}
+
 
   Future<void> _onDeleteParking(DeleteParking event, Emitter<ParkingState> emit) async {
     try {
@@ -63,4 +120,8 @@ Future<void> _onAddParking(AddParking event, Emitter<ParkingState> emit) async {
   );
 }
 
+  int _safeNotificationId(Object object, int offset) {
+
+  return object.hashCode.abs() % 1000000000 + offset;
+}
 }

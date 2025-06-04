@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uppgift3_new_app/blocs/auth/auth_bloc.dart';
+import 'package:uppgift3_new_app/repositories/notification_repository.dart';
 import 'package:uppgift3_new_app/views/home.dart';
 
 class SignupScreen extends StatelessWidget {
+ 
   SignupScreen({super.key});
 
   final TextEditingController _nameController = TextEditingController();
@@ -20,7 +22,7 @@ class SignupScreen extends StatelessWidget {
             if (state is AuthSuccess) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const Home(title: 'Parking App',)),
+                MaterialPageRoute(builder: (_) =>  Home(title: 'Parking App')),
               );
             } else if (state is AuthFailure) {
               ScaffoldMessenger.of(context).showSnackBar(

@@ -1,10 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uppgift3_new_app/blocs/auth/auth_bloc.dart';
 import 'package:uppgift3_new_app/main.dart';
+import 'package:uppgift3_new_app/repositories/notification_repository.dart';
 import 'package:uppgift3_new_app/views/home.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  AuthService();
 
     Future<void> signup({
       required String name,
@@ -25,12 +30,8 @@ class AuthService {
 
       await Future.delayed(const Duration(seconds: 1));
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const MyApp(),
-        ),
-      );
+      context.read<AuthBloc>().add(AuthSubscribe());
+
     } on FirebaseAuthException catch (e) {
       String message = '';
       if (e.code == 'weak-password') {
@@ -93,11 +94,12 @@ class AuthService {
       await FirebaseAuth.instance.signOut();
       await Future.delayed(const Duration(seconds: 1));
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const MyApp(),
-        ),
-      );
+     // Navigator.pushReplacement(
+        Navigator.pushReplacementNamed(context, '/');
+       // context,
+        //MaterialPageRoute(
+        //  builder: (context) => MyApp(notificationRepository: notificationRepository),
+        //),
+   // );
     }
 }

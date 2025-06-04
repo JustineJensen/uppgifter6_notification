@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uppgift3_new_app/repositories/notification_repository.dart';
 import 'package:uppgift3_new_app/views/home_view.dart';
 import 'package:uppgift3_new_app/views/list_view.dart';
 import 'package:uppgift3_new_app/views/profile_view.dart';
@@ -14,15 +16,18 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _selectedIndex = 0;
+  late final List<Widget> _screens;
 
-  final List<Widget> _screens = const [
-    HomeScreenContent(),
-    ListScreen(),
-    ProfileScreen(),
-    SearchScreen(),
-
-  ];
-
+   @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreenContent(),
+      ListScreen(),
+      ProfileScreen(),
+      SearchScreen(),
+    ];
+  }
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -31,6 +36,7 @@ class _HomeState extends State<Home> {
 
  @override
 Widget build(BuildContext context) {
+   final notificationRepo = context.read<NotificationRepository>();
   final isWideScreen = MediaQuery.of(context).size.width >= 600;
 
   return Scaffold(

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_event.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_state.dart';
 import 'package:uppgift3_new_app/models/car.dart';
 import 'package:uppgift3_new_app/models/parking.dart';
 import 'package:uppgift3_new_app/models/parkingSpace.dart';
-import 'package:uppgift3_new_app/models/person.dart';
 import 'package:uppgift3_new_app/models/vehicleType.dart';
+import 'package:uppgift3_new_app/repositories/notification_repository.dart';
 import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
+import 'package:uppgift3_new_app/models/person.dart' as app_model;
+
+
+
 
 class ParkingView extends StatefulWidget {
+   
   const ParkingView({super.key});
 
   @override
@@ -18,6 +24,7 @@ class ParkingView extends StatefulWidget {
 }
 
 class _ParkingViewState extends State<ParkingView> {
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   @override
   void initState() {
     super.initState();
@@ -28,7 +35,9 @@ class _ParkingViewState extends State<ParkingView> {
   Widget build(BuildContext context) {
     return BlocProvider(
     create: (context) {
-      final bloc = ParkingBloc(ParkingRepository.instance);
+        final parkingRepository = ParkingRepository.instance;
+    final notificationRepository = context.read<NotificationRepository>();
+      final bloc = ParkingBloc(ParkingRepository.instance,notificationRepository);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         bloc.add(StreamParkings());
       });
@@ -164,6 +173,11 @@ class _ParkingViewState extends State<ParkingView> {
     final colorController = TextEditingController();
     final parkingSpaceIdController = TextEditingController();
     final parkingLocationController = TextEditingController();
+    final startTime = DateTime.now();
+    DateTime? endTime;
+
+    final startTimeController = TextEditingController(text: _formatDateTime(startTime));
+    final endTimeController = TextEditingController();
 
     showDialog(
       context: context,
@@ -179,7 +193,38 @@ class _ParkingViewState extends State<ParkingView> {
                 _textField(colorController, 'Color'),
                 _textField(parkingSpaceIdController, 'Parking Space ID', isNumber: true),
                 _textField(parkingLocationController, 'Parking Location'),
-              ],
+                _textField(startTimeController, 'Start Time', enabled: false),
+            GestureDetector(
+            onTap: () async {
+              final pickedDate = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(Duration(days: 30)),
+              );
+              if (pickedDate != null) {
+                final pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (pickedTime != null) {
+                  endTime = DateTime(
+                    pickedDate.year,
+                    pickedDate.month,
+                    pickedDate.day,
+                    pickedTime.hour,
+                    pickedTime.minute,
+                  );
+                  endTimeController.text = _formatDateTime(endTime!);
+                }
+              }
+            },
+            child: AbsorbPointer(
+              child: _textField(endTimeController, 'End Time'),
+            ),
+          ),
+
+          ],
             ),
           ),
           actions: [
@@ -205,12 +250,13 @@ class _ParkingViewState extends State<ParkingView> {
                     id: DateTime.now().millisecondsSinceEpoch,
                     registreringsNummer: regNum,
                     typ: VehicleType.Bil,
-                    owner: Person(namn: owner, personNummer: -1),
+                    owner:app_model.Person(namn: owner, personNummer: -1),
                     color: color,
                   ),
                   parkingSpace: ParkingSpace(id: spaceId, adress: location, pricePerHour: 20.0),
-                  startTime: DateTime.now(),
-                  endTime: null,
+                  startTime: startTime,
+                  endTime: endTime,
+
                 );
 
                 context.read<ParkingBloc>().add(AddParking(parking));
@@ -247,6 +293,7 @@ class _ParkingViewState extends State<ParkingView> {
                 _textField(colorCtrl, 'Color'),
                 _textField(spaceIdCtrl, 'Parking Space ID', isNumber: true),
                 _textField(locationCtrl, 'Parking Location'),
+                
               ],
             ),
           ),
@@ -273,7 +320,7 @@ class _ParkingViewState extends State<ParkingView> {
                   id: parking.fordon.id,
                   registreringsNummer: reg,
                   typ: parking.fordon.typ,
-                  owner: Person(
+                  owner: app_model.Person(
                     namn: own,
                     personNummer: parking.fordon.owner.personNummer,
                   ),
@@ -299,12 +346,15 @@ class _ParkingViewState extends State<ParkingView> {
     );
   }
 
-  Widget _textField(TextEditingController controller, String label, {bool isNumber = false}) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(labelText: label),
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-    );
+  Widget _textField(TextEditingController controller, String label, {bool isNumber = false, bool enabled = true}) {
+  return TextField(
+    controller: controller,
+    decoration: InputDecoration(labelText: label),
+    keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+    enabled: enabled,
+  );
+}
+
   }
 
   void _calculateCost(BuildContext context, Parking parking) {
@@ -341,5 +391,5 @@ class _ParkingViewState extends State<ParkingView> {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} '
            '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
-}
+
 

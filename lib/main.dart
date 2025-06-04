@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:uppgift3_new_app/blocs/auth/auth_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_bloc.dart';
 import 'package:uppgift3_new_app/blocs/parking_bloc/parking_event.dart';
@@ -13,6 +14,7 @@ import 'package:uppgift3_new_app/blocs/person_bloc/person_event.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_bloc.dart';
 import 'package:uppgift3_new_app/blocs/vehicle_bloc/vehicle_event.dart';
 import 'package:uppgift3_new_app/firebase_options.dart';
+import 'package:uppgift3_new_app/repositories/notification_repository.dart';
 import 'package:uppgift3_new_app/repositories/parkingRepository.dart';
 import 'package:uppgift3_new_app/repositories/parkingSpaceRepository.dart';
 import 'package:uppgift3_new_app/repositories/vehicleRepository.dart';
@@ -28,8 +30,7 @@ import 'package:uppgift3_new_app/views/parking_space_view.dart';
  Future<FlutterLocalNotificationsPlugin> initializeNotifications() async { 
       var flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(); 
       //plattform's specific settings
-      var initializationSettingsAndroid = const AndroidInitializationSettings( 
-      '@drawable/ic_notification'); 
+      var initializationSettingsAndroid = const AndroidInitializationSettings('@mipmap/ic_launcher');
       var initializationSettingsIOS = const DarwinInitializationSettings(); 
       var initializationSettingsLinux = const LinuxInitializationSettings(defaultActionName:'Open notification' );
       
@@ -45,25 +46,41 @@ import 'package:uppgift3_new_app/views/parking_space_view.dart';
             iOS: initializationSettingsIOS, 
             windows: initializationSettingsWindows,
             linux:initializationSettingsLinux ); 
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings); 
+      await flutterLocalNotificationsPlugin.initialize(initializationSettings, onDidReceiveNotificationResponse: (NotificationResponse response) {
+      if (response.actionId == 'extend_parking') {
+        print('Extend parking pressed!');
+      } else if (response.actionId == 'dismiss') {
+        print('Dismiss pressed!');
+      } else {
+        print('Notification tapped without action button');
+      }
+    },); 
       return flutterLocalNotificationsPlugin; 
      }
   void main() async {
     WidgetsFlutterBinding.ensureInitialized();
+    tz.initializeTimeZones();
     var notificationPlugin = await initializeNotifications();
+    final notificationRepository = NotificationRepository(notificationPlugin);
+    await notificationRepository.initialize();
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
-      runApp(const MyApp());
-    } catch (e) {
-      print('Firebase init failed: $e');
-    }
+        runApp(
+      RepositoryProvider.value(
+        value: notificationRepository,
+        child: MyApp(notificationRepository: notificationRepository),
+      ),
+    );
+  } catch (e) {
+    print('Firebase init failed: $e');
   }
+}
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
-  
+  final NotificationRepository notificationRepository;
+  const MyApp({super.key,required this.notificationRepository});
 
   @override
   _MyAppState createState() => _MyAppState();
@@ -80,6 +97,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final notificationRepository = context.read<NotificationRepository>();
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
@@ -92,7 +110,7 @@ class _MyAppState extends State<MyApp> {
           create: (_) => VehicleBloc(VehicleRepository.instance)..add(LoadVehicles()),
         ),
         BlocProvider<ParkingBloc>(
-          create: (_) => ParkingBloc(ParkingRepository.instance)..add(LoadParkings()),
+          create: (_) => ParkingBloc(ParkingRepository.instance,notificationRepository)..add(LoadParkings()),
         ),
         BlocProvider<ParkingSpaceBloc>(
           create: (_) => ParkingSpaceBloc(ParkingSpaceRepository.instance)..add(LoadParkingSpaces()),

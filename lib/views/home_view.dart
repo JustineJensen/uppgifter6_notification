@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:uppgift3_new_app/blocs/auth/auth_service.dart';
+import 'package:uppgift3_new_app/repositories/notification_repository.dart';
 
 class HomeScreenContent extends StatelessWidget {
   const HomeScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final notificationRepo = context.read<NotificationRepository>();
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
@@ -31,6 +35,7 @@ class HomeScreenContent extends StatelessWidget {
                 },
                 child: const Text("Sign Out"),
               ),
+
             ],
           ),
         ),
