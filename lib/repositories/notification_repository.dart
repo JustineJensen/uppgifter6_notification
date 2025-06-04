@@ -65,8 +65,9 @@ class NotificationRepository {
       channelDescription: channelDescription,
       importance: Importance.max,
       priority: Priority.high,
-      ticker: 'ticker', 
-    
+      ticker: 'ticker',
+      sound: RawResourceAndroidNotificationSound('alert_sound'), 
+      playSound: true,
     );
 
     var darwinPlatformChannelSpecifics = const DarwinNotificationDetails();
